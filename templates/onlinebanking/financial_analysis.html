@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Transactions{% endblock %}
+{% block content %}
+<h2>Your spending trends</h2>
+
+<div class="row align-items-top">
+    <div class="col-4">
+        <ul class="list-group">
+            {% for category in categories %}
+                <li class="list-group-item">{{ category.name }}: ${{ category.total_value }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-8">
+
+        <form method="post">
+            {% csrf_token %}
+            <p>Do you want to see the products and services best suited to your spending habits? <input type="checkbox" name="interested" checked></p>
+            <button class="btn btn-primary" type="submit">Yes I am! Tell me more</button>
+        </form>
+        {% if answer %}
+            <pre></pre>
+            <div class="card">
+                <div class="card-body">
+                    {{ answer|safe }}
+                </div>
+            </div>
+        {% endif %}
+        {% if offer_summary %}
+        <pre></pre>
+         <div class="accordion" id="offer_summary">
+             <div class="accordion-header">
+                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSummary" aria-expanded="false" aria-controls="collapseSummary">
+                   Offer score matches
+                 </button>
+                 <div id="collapseSummary" class="accordion-collapse collapse" data-bs-parent="#offer_summary">
+                     <div class="accordion-body">
+                        <ul class="list-group">
+                            {% for offer_row in offer_summary %}
+                            <li class="list-group-item">{{ offer_row.offer_name }}:  {{ offer_row.purchase_value }} -- {{ offer_row.score }}</li>
+                            {% endfor %}
+                        </ul>
+                     </div>
+                 </div>
+             </div>
+         </div>
+        {% endif %}
+        {% if transaction_list %}
+            <pre></pre>
+             <div class="accordion" id="transaction_list">
+                 <div class="accordion-header">
+                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTransactions" aria-expanded="false" aria-controls="collapseTransactions">
+                       Supporting transactions
+                     </button>
+                     <div id="collapseTransactions" class="accordion-collapse collapse" data-bs-parent="#offer_summary">
+                         <div class="accordion-body">
+                            <ul class="list-group">
+                                {% for i in transaction_list %}
+                                <li class="list-group-item">{{ i.offer_name }}:  {{ i.transaction_description }} -- {{ i.score }}</li>
+                                {% endfor %}
+                            </ul>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="container text-left">
+    <h3>Using the menu items above, manage your setup here before you run through a demo.</h3>
+</div>
+{% if view_name == 'clear_data' %}
+    <div class="container text-left card">
+        <div class="card-body">
+            <ul class="list-group">
+                <li class="list-group-item">{{ bank_account_count }} bank accounts</li>
+                <li class="list-group-item">{{ customer_count }} customers</li>
+                <li class="list-group-item">{{ customer_address_count }} customer addresses</li>
+                <li class="list-group-item">{{ account_transactions_count }} transactions</li>
+                <li class="list-group-item">{{ retailer_count }} retailers</li>
+                <li class="list-group-item">{{ es_record_count }} records in Elasticsearch (this is not always 100% up to date)</li>
+            </ul>
+            {% if customer_count > 0 %}
+                Do you want to delete all the data listed above?
+                <form method="post" action="{% url 'clear_data' %}">
+                    {% csrf_token %}
+                    <div class="form-check form-switch">
+                      <input name="delete" class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
+                      <label class="form-check-label" for="flexSwitchCheckDefault">Nuke it!</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+{% elif view_name == 'generate_data' %}
+     <div class="container text-left card">
+        <div class="card-body">
+            <h5>Specify your input variables here:</h5>
+            <form method="post" action="{% url 'action' %}">
+                {% csrf_token %}
+                <div class="row g-3 align-items-left">
+                  <div class="col-md-2">
+                    <label for="numberCustomers" class="col-form-label">Number of customers</label>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" value="10" name="number_of_customers" id="numberCustomers" class="form-control" min="10" max="100" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="numberMonths" class="col-form-label"># months</label>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" value="1" name="number_of_months" id="numberMonths" class="form-control" min="1" max="3" required>
+                  </div>
+                </div>
+                <pre></pre>
+                <div class="row g-3 align-items-left">
+                  <div class="col-md-2">
+                    <label for="transactionRangeMin" class="col-form-label">Min # transactions/day</label>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" value="3" id="transactionRangeMin" name="transaction_minimum" class="form-control" min="0" max="5" required>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="transactionRangeMax" class="col-form-label">Max # transactions/day</label>
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" value="10" id="transactionRangeMax" name="transaction_maximum" class="form-control" min="5" max="10" required>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

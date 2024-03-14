@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="container">
+  <h2>The Elastic-enabled bank</h2>
+  <div class="accordion" id="semantic_search">
+    <div class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNLSearch" aria-expanded="false" aria-controls="collapseNLSearch">
+        Natural language search
+      </button>
+      <div id="collapseNLSearch" class="accordion-collapse collapse" data-bs-parent="#semantic_search">
+        <div class="accordion-body">
+          <p>
+            Natural language (semantic) search enables meaningful queries on a user's financial transactions, allowing
+            transactions to be returned when searched for general terms that are based on a concept. When explaining this, first show the 'regular'
+            search experience that we are used to by clicking the link below and selecting an account on the home page,
+            then compare it to the semantic search capability offered by Vectorsearch.
+          </p>
+          <ul class="list-group">
+            <li class="list-group-item"> <a href="/onlinebanking/">Traditional search</a></li>
+            <li class="list-group-item"> <a href="/onlinebanking/search">Natural language search</a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <pre></pre>
+  <div class="accordion" id="crossSell">
+    <div class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsecrossSell" aria-expanded="false" aria-controls="collapsecrossSell">
+        Contextual offers based on customer transactions
+      </button>
+      <div id="collapsecrossSell" class="accordion-collapse collapse" data-bs-parent="#crossSell">
+        <div class="accordion-body">
+          <p>
+            This section shows two features:
+            <ul class="list-group">
+              <li class="list-group-item">The aggregation of transactions by category across multiple accounts, which is only
+              possible by unifying data in real time.</li>
+              <li class="list-group-item">Vectorsearch for similarity, which is used to provide contextual product and service recommendations.
+                By understanding the semantic meaning of transaction descriptions, we search against products and services that our bank offers,
+            and then return a tailored message using generative AI.
+              </li>
+            </ul>
+          </p>
+          <p>
+            The ability to leverage Vectorsearch also enables contextual product and service recommendations.
+            By understanding the semantic meaning of transaction descriptions, we search against products and services that the bank offers,
+            and then based on the similarity of the offer we return a tailored message using generative AI based on information that we know about the
+            customer and their spending habits.
+          </p>
+          <ul class="list-group">
+            <li class="list-group-item"> <a href="/onlinebanking/financial_analysis">Financial summary</a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <pre></pre>
+  <div class="accordion" id="customer_support">
+    <div class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCustomerSupport" aria-expanded="false" aria-controls="collapseCustomerSupport">
+        Customer support
+      </button>
+      <div id="collapseCustomerSupport" class="accordion-collapse collapse" data-bs-parent="#customer_support">
+        <div class="accordion-body">
+          <p>
+            Leverage Vectorsearch and generative AI to provide a simple but effective mechanism of answering customer queries
+            using a knowledge base of existing content.
+          </p>
+          <ul class="list-group">
+            <li class="list-group-item"> <a href="/onlinebanking/customer_support">Customer support</a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <pre></pre>
+  <div class="accordion" id="kibana">
+    <div class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKibana" aria-expanded="false" aria-controls="collapseKibana">
+        Bank 360
+      </button>
+      <div id="collapseKibana" class="accordion-collapse collapse" data-bs-parent="#kibana">
+        <div class="accordion-body">
+          <p>
+            By combining data from many disparate data sources, we can visualise real-time metrics about our bank by
+            using the features available in Kibana. Furthermore, Kibana offers us the capability to search and filter data
+            as we need to, without long processing times driven by expensive queries.
+          </p>
+          <ul class="list-group">
+            <li class="list-group-item"> <a href="{{ kibana_url }}">Open Kibana</a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <pre></pre>
+  <br>
+</div>
+{% endblock %}

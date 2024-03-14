@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+    {% if view_name == 'confirmation' %}
+        <div class="container">
+            <h5>The folowing indices exists with the following mapping:</h5>
+                <b>Transaction Index:</b> {{ transaction_mapping }}
+                <pre></pre>
+                <b>Product Index:</b> {{ product_mapping }}
+            <pre></pre>
+            <h5>And the following pipeline exists:</h5>
+                {{ pipeline }}
+            <pre></pre>
+        </div>
+    {% elif view_name == 'created' %}
+        <h5>Your indices been rebuilt and is ready to be populated with data.</h5>
+    {% elif view_name == 'incomplete' %}
+        <h5>Your index and pipeline configuration is incomplete, click here to delete and start from scratch</h5>
+    {% elif view_name == 'scratch_build' %}
+        <h5>Your index and pipeline configuration does not exist, click here to delete and start from scratch</h5>
+    {% endif %}
+    <form method="post" action="{% url 'index_setup' %}">
+        {% csrf_token %}
+        <input type="text" name="command_name" value="execute" hidden>
+        <button type="submit" class="btn btn-primary">Execute index and pipeline build</button>
+    </form>
+{% endblock %}

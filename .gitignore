@@ -1,0 +1,4 @@
+/.venv/
+/config/
+/.env
+/manage.py
