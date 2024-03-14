@@ -7,9 +7,11 @@ internal bank visibility and analytics through the implementation of data de-nor
 
 ### Prerequisites
 You must have Python 3.8 or above installed locally on the system you intend to run this demo on. 
-In addition, please review the contents of the env.example file in this rep and ensure you have the necessary details to populate the template.
+In addition, please review the contents of the env.example file in this repo and ensure you have the necessary details to populate the template.
 Certain credentials will be generated as you build the application. 
+
 Specifically:
+
 - DJANGO_SECRET_KEY - this gets created when you build your django project
 All other details in the .env file will need to be obtained prior to the setup of this project.
 
@@ -21,9 +23,10 @@ Your cluster will need:
 - 1GB RAM kibana node
 - 2GB RAM search node
 - an Integration node if you want to instrument the application later
+
 Once you have a cluster configured, you must enable the '.elser_model_2_linux-x86_64' trained model in your cluster. If you choose another model you must consider
 the implications of updating the query code as the format of the semantic search is done using text expansion.
-- 
+
 ### Installation
 To begin: 
 - download this repo
@@ -49,6 +52,7 @@ Now create a fresh .env file, and use the contents of env.example as a template.
 application to work. 
 
 NB: Grab the Django Secret Key from the newly created settings.py file located in the 'config' folder, and put it in your .env file.
+
 Next, copy the urls.py and settings.py files from the 'example-config' folder to the 'config' folder (**overwrite** the existing files)
 
 In your terminal, enter the following command to start the webserver:
