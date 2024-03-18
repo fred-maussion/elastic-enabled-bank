@@ -23,6 +23,8 @@ MODEL_ID = '.elser_model_2_linux-x86_64'
 PRODUCT_INDEX = 'banking-products'
 PRODUCT_INDEX_PIPELINE_NAME = 'ml-inference-search-bank-project-transactions_v1'
 CUSTOMER_SUPPORT_INDEX = 'search-customer-support'
+LLM_AUDIT_LOG_INDEX = 'llm-audit-log'
+LLM_PROVIDER = 'azure'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

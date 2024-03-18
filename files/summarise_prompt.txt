@@ -1,0 +1,5 @@
+f"""Please summarise the following banking transactions into categories, which were returned as part
+                of a search for the following phrase: {question}.
+                {transaction_results}
+                Format your response using Bootstrap
+                """

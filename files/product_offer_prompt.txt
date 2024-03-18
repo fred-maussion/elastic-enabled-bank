@@ -1,0 +1,9 @@
+f"""The following special offers are
+        relevant to me based on the these spending patterns:
+        {offer_summary}
+        Also take into account that I live in the Netherlands, I have 2 children and have a mortgage.
+
+        Your job is to use tell me about any offers that would suit me and describe why I should consider them.
+        Be as brief as possible and do not refer to the field names with underscores in them and use Bootstrap to format your answer nicely so that they
+        appear in a list and are easy to read.
+        """

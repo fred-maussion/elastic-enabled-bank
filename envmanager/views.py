@@ -13,6 +13,7 @@ from config import settings
 customer_id = getattr(settings, 'DEMO_USER_ID', None)
 index_name = getattr(settings, 'TRANSACTION_INDEX_NAME', None)
 product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
+llm_audit_index_name = getattr(settings, 'LLM_AUDIT_LOG_INDEX', None)
 pipeline_name = getattr(settings, 'TRANSACTION_PIPELINE_NAME', None)
 elastic_cloud_id = getattr(settings, 'elastic_cloud_id', None)
 elastic_user = getattr(settings, 'elastic_user', None)
@@ -168,6 +169,7 @@ def index_setup(request):
     if request.method == 'POST':
         transaction_index_mapping = read_json_file(f'files/transaction_index_mapping.json')
         product_index_mapping = read_json_file(f'files/product_index_mapping.json')
+        llm_audit_index_mapping = read_json_file(f'files/llm_audit_log_mapping.json')
         pipeline_processors = read_json_file(f'files/transaction_index_pipeline.json')
 
         # transaction index
@@ -182,6 +184,11 @@ def index_setup(request):
             es.indices.delete(index=product_index_name)
         es.indices.create(index=product_index_name, mappings=product_index_mapping)
 
+        # llm_audit_log
+        llm_index_exists = es.indices.exists(index=llm_audit_index_name)
+        if llm_index_exists:
+            es.indices.delete(index=llm_audit_index_name)
+        es.indices.create(index=llm_audit_index_name, mappings=llm_audit_index_mapping)
         # ingest pipeline
         pipeline_exists = es.ingest.get_pipeline(id=pipeline_name, ignore=[404])
         if pipeline_exists:
@@ -195,15 +202,18 @@ def index_setup(request):
         # check if the indices exist
         index_exists = es.indices.exists(index=index_name)
         product_index_exists = es.indices.exists(index=product_index_name)
+        llm_index_exists = es.indices.exists(index=llm_audit_index_name)
         pipeline_exists = es.ingest.get_pipeline(id=pipeline_name, ignore=[404])
-        if index_exists and pipeline_exists and product_index_exists:
+        if index_exists and pipeline_exists and product_index_exists and llm_index_exists:
             transaction_mapping = es.indices.get_mapping(index=index_name)
             product_mapping = es.indices.get_mapping(index=product_index_name)
+            ll_audit_mapping = es.indices.get_mapping(index=llm_audit_index_name)
             pipeline = es.ingest.get_pipeline(id=pipeline_name)
             context = {
                 'view_name': 'confirmation',
                 'transaction_mapping': transaction_mapping,
                 'product_mapping': product_mapping,
+                'llm_audit_mapping': ll_audit_mapping,
                 'pipeline': pipeline
             }
         elif ((product_index_exists and index_exists) and not pipeline_exists) or (

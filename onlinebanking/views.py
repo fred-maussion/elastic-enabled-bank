@@ -1,16 +1,13 @@
 import json
 import googlemaps
-import elasticsearch
 from django.shortcuts import render
 from .models import BankAccount, AccountTransaction, Customer, Retailer, BankingProducts
 from .forms import AccountTransactionForm, AccountTransferForm
 from elasticsearch import Elasticsearch
-import boto3
 from langchain.chat_models import AzureChatOpenAI
-from langchain.llms import Bedrock, AzureOpenAI
 from dotenv import load_dotenv
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import tiktoken
 import nltk
 from nltk.tokenize import word_tokenize
@@ -18,14 +15,14 @@ import re
 from config import settings
 import pandas as pd
 from django.db.models import Q
+import math
+import uuid
 
 load_dotenv()
 
 from langchain.schema import (
     SystemMessage,
-    HumanMessage,
-    AIMessage
-)
+    HumanMessage)
 from config.settings import GOOGLE_MAPS_API_KEY
 
 customer_id = getattr(settings, 'DEMO_USER_ID', None)
@@ -41,6 +38,58 @@ model_id = getattr(settings, 'MODEL_ID', None)
 pipeline_name = getattr(settings, 'TRANSACTION_PIPELINE_NAME', None)
 product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
 customer_support_index = getattr(settings, 'CUSTOMER_SUPPORT_INDEX', None)
+logging_index = getattr(settings, 'LLM_AUDIT_LOG_INDEX', None)
+llm_provider = getattr(settings, 'LLM_PROVIDER', None)
+llm_temperature = 1
+
+# calculate the cost of an LLM interaction
+def calculate_cost(message, type):
+    provider = llm_provider
+    rate_card = {
+        'azure': {
+            'prompt': 0.003,
+            'response': 0.004
+        },
+        'aws': {
+            'prompt': 0.008,
+            'response': 0.024
+        }
+    }
+    cost_per_1k = rate_card[provider][type]
+    message_token_count = num_tokens_from_string(message, "cl100k_base")
+    billable_message_tokens = message_token_count / 1000
+    rounded_up_message_tokens = math.ceil(billable_message_tokens)
+    message_cost = rounded_up_message_tokens * cost_per_1k
+    return message_cost
+
+
+def log_llm_interaction(prompt, response, sent_time, received_time, answer_type, provider, model, business_process):
+    es = Elasticsearch(
+        cloud_id=elastic_cloud_id,
+        http_auth=(elastic_user, elastic_password)
+    )
+    log_id = uuid.uuid4()
+    dt_latency = received_time - sent_time
+    actual_latency = dt_latency.total_seconds()
+    body = {
+        "@timestamp": datetime.now(tz=timezone.utc),
+        "prompt": prompt,
+        "response": response,
+        "business_process": business_process,
+        "provider": provider,
+        "model": model,
+        "timestamp_sent": sent_time,
+        "timestamp_received": received_time,
+        "prompt_cost": calculate_cost(prompt, 'prompt'),
+        "response_cost": calculate_cost(response, 'response'),
+        "answer_type": answer_type,
+        "llm_latency": actual_latency,
+        "llm_temperature": llm_temperature
+
+    }
+    response = es.index(index=logging_index, id=log_id, document=body)
+    return
+
 
 def init_chat_model(provider):
     provider = 'azure'
@@ -54,9 +103,10 @@ def init_chat_model(provider):
             deployment_name=DEPLOYMENT_NAME,
             openai_api_key=API_KEY,
             openai_api_type="azure",
-            temperature=1
+            temperature=llm_temperature
         )
     return chat_model
+
 
 def chat_model_message(query, context):
     # interact with the LLM
@@ -185,8 +235,10 @@ def customer_support(request):
             }
         }
         customer_support_field_list = ['title', 'body_content', '_score']
-        customer_support_results = es.search(index=customer_support_index, query=query, size=100, fields=customer_support_field_list, min_score=10)
-        response_data = [{"_score": hit["_score"], **hit["_source"]} for hit in customer_support_results["hits"]["hits"]]
+        customer_support_results = es.search(index=customer_support_index, query=query, size=100,
+                                             fields=customer_support_field_list, min_score=10)
+        response_data = [{"_score": hit["_score"], **hit["_source"]} for hit in
+                         customer_support_results["hits"]["hits"]]
         documents = []
         # Check if there are hits
         if customer_support_results['hits']['total']['value'] > 1:
@@ -209,8 +261,11 @@ def customer_support(request):
                 content="You are a helpful customer support agent."),
             HumanMessage(content=augmented_prompt)
         ]
+        sent_time = datetime.now(tz=timezone.utc)
         chat_model = init_chat_model('azure')
         answer = chat_model(messages).content
+        received_time = datetime.now(tz=timezone.utc)
+        log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id, 'customer support')
     context = {
         "question": question,
         "answer": answer,
@@ -300,8 +355,9 @@ def financial_analysis(request):
                 }
             }
             offer_field_list = ["transaction_date", "description", "transaction_value", "transaction_category",
-                          "retail_category"]
-            matching_transactions = es.search(index=index_name, query=offer_query, min_score=10, fields=offer_field_list)
+                                "retail_category"]
+            matching_transactions = es.search(index=index_name, query=offer_query, min_score=10,
+                                              fields=offer_field_list)
             if matching_transactions['hits']['total']['value'] > 1:
                 for hit in matching_transactions['hits']['hits']:
                     transaction_info = {
@@ -318,22 +374,22 @@ def financial_analysis(request):
         offer_summary_dict = offer_summary.to_dict(orient='records')
         print(offer_summary_dict)
 
-        augmented_prompt = f"""The following special offers are 
-        relevant to me based on the these spending patterns:
-        {offer_summary}
-        Also take into account that I live in the Netherlands, I have 2 children and have a mortgage.
-        
-        Your job is to use tell me about any offers that would suit me and describe why I should consider them.
-        Be as brief as possible and do not refer to the field names with underscores in them and use Bootstrap to format your answer nicely so that they 
-        appear in a list and are easy to read.
-        """
+        prompt_file = 'files/product_offer_prompt.txt'
+        with open(prompt_file, "r") as file:
+            prompt_contents_template = file.read()
+            prompt = prompt_contents_template.format(offer_summary=offer_summary)
+            augmented_prompt = prompt
         messages = [
             SystemMessage(
                 content="You are a helpful customer support agent."),
             HumanMessage(content=augmented_prompt)
         ]
+        sent_time = datetime.now(tz=timezone.utc)
         chat_model = init_chat_model('azure')
         answer = chat_model(messages).content
+        received_time = datetime.now(tz=timezone.utc)
+        log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
+                            'product offer')
         context = {
             "transaction_list": transaction_info_list,
             'categories': categories,
@@ -383,7 +439,7 @@ def search(request):
         }
 
         field_list = ["transaction_date", "description", "transaction_value",
-                      "transaction_category", "bank_account_number","opening_balance", "closing_balance", "_score"]
+                      "transaction_category", "bank_account_number", "opening_balance", "closing_balance", "_score"]
         results = es.search(index=index_name, query=query, size=100, min_score=10)
         response_data = [{"_score": hit["_score"], **hit["_source"]} for hit in results["hits"]["hits"]]
         transaction_results = []
@@ -396,18 +452,22 @@ def search(request):
                     doc_data = {field: hit[field] for field in field_list if field in hit}
                     transaction_results.append(doc_data)
             if 'summarise' in request.POST:
-                augmented_prompt = f"""Please summarise the following banking transactions into categories, which were returned as part 
-                of a search for the following phrase: { question }. 
-                {transaction_results}
-                Format your response using Bootstrap
-                """
+                prompt_file = 'files/summarise_prompt.txt'
+                with open(prompt_file, "r") as file:
+                    prompt_contents_template = file.read()
+                prompt = prompt_contents_template.format(question=question, transaction_results=transaction_results)
+                augmented_prompt = prompt
                 messages = [
                     SystemMessage(
                         content="You are a helpful customer support agent."),
                     HumanMessage(content=augmented_prompt)
                 ]
+                sent_time = datetime.now(tz=timezone.utc)
                 chat_model = init_chat_model('azure')
                 summary = chat_model(messages).content
+                received_time = datetime.now(tz=timezone.utc)
+                log_llm_interaction(augmented_prompt, summary, sent_time, received_time, 'original', 'azure', model_id,
+                                    'summarise')
     else:
         transaction_results = []
     context = {
