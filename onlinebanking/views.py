@@ -40,7 +40,7 @@ product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
 customer_support_index = getattr(settings, 'CUSTOMER_SUPPORT_INDEX', None)
 logging_index = getattr(settings, 'LLM_AUDIT_LOG_INDEX', None)
 llm_provider = getattr(settings, 'LLM_PROVIDER', None)
-llm_temperature = 1
+llm_temperature = 0
 
 # calculate the cost of an LLM interaction
 def calculate_cost(message, type):
@@ -258,7 +258,7 @@ def customer_support(request):
         """
         messages = [
             SystemMessage(
-                content="You are a helpful customer support agent."),
+                content="You are a helpful customer support agent. Speak with a Pirate accent when you respond."),
             HumanMessage(content=augmented_prompt)
         ]
         sent_time = datetime.now(tz=timezone.utc)

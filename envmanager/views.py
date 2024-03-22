@@ -7,7 +7,6 @@ from onlinebanking.models import BankAccount, BankAccountType, AccountTransactio
 from django.core.management import call_command
 from elasticsearch import Elasticsearch
 import subprocess
-import requests
 from config import settings
 
 customer_id = getattr(settings, 'DEMO_USER_ID', None)
@@ -168,6 +167,7 @@ def index_setup(request):
         http_auth=(elastic_user, elastic_password))
     if request.method == 'POST':
         transaction_index_mapping = read_json_file(f'files/transaction_index_mapping.json')
+        transaction_index_settings = read_json_file(f'files/transaction_index_settings.json')
         product_index_mapping = read_json_file(f'files/product_index_mapping.json')
         llm_audit_index_mapping = read_json_file(f'files/llm_audit_log_mapping.json')
         pipeline_processors = read_json_file(f'files/transaction_index_pipeline.json')
@@ -176,7 +176,7 @@ def index_setup(request):
         index_exists = es.indices.exists(index=index_name)
         if index_exists:
             es.indices.delete(index=index_name)
-        es.indices.create(index=index_name, mappings=transaction_index_mapping)
+        es.indices.create(index=index_name, mappings=transaction_index_mapping, settings=transaction_index_settings)
 
         # product index
         product_index_exists = es.indices.exists(index=product_index_name)

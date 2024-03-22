@@ -1,6 +1,7 @@
 import os
 import googlemaps
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
 from onlinebanking.models import BankAccount, BankAccountType, AccountTransactionType, AccountTransaction, Customer, \
     CustomerAddress, Retailer, BankingProducts
 from envmanager.models import ClusterDetail
@@ -9,6 +10,7 @@ import json
 import re
 from config import settings
 from config.settings import GOOGLE_MAPS_API_KEY
+
 index_name = getattr(settings, 'TRANSACTION_INDEX_NAME', None)
 product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
 pipeline_name = getattr(settings, 'TRANSACTION_PIPELINE_NAME', None)
@@ -21,6 +23,7 @@ es = Elasticsearch(
     http_auth=(elastic_user, elastic_password)
 )
 
+
 def build_product(product_id):
     payload = {}
     product_detail = BankingProducts.objects.filter(id=product_id).first()
@@ -31,6 +34,7 @@ def build_product(product_id):
     }
     payload = json.dumps(payload)
     return payload
+
 
 def build_record(transaction_id):
     payload = {}
@@ -56,7 +60,8 @@ def build_record(transaction_id):
     if match:
         merchant = match.group(1)
         retailer_format = Retailer.objects.filter(name=merchant).first()
-        payload['description'] = f"{transaction_details.description} - retail category: { retailer_format.dominant_operational_format }"
+        payload[
+            'description'] = f"{transaction_details.description} - retail category: {retailer_format.dominant_operational_format}"
         payload['merchant_name'] = match.group(1)
         payload['location'] = match.group(2)
         payload['retail_category'] = retailer_format.dominant_operational_format
@@ -74,23 +79,73 @@ def build_record(transaction_id):
     print(payload)
     return payload
 
+
+# class Command(BaseCommand):
+#     help = 'Export un-exported records to Elasticsearch'
+#
+#     def handle(self, *args, **kwargs):
+#         records_to_import = AccountTransaction.objects.filter(exported=0)
+#         for r in records_to_import:
+#             payload = build_record(r.id)
+#             index_response = es.index(index=index_name, id=r.id, document=payload, pipeline=pipeline_name)
+#             r.exported = 1
+#             r.save()
+#
+#         banking_products_to_import = BankingProducts.objects.filter(exported=0)
+#         for r in banking_products_to_import:
+#             payload = build_product(r.id)
+#             index_response = es.index(index=product_index_name, id=r.id, document=payload, pipeline=pipeline_name)
+#             r.exported = 1
+#             r.save()
+
 class Command(BaseCommand):
     help = 'Export un-exported records to Elasticsearch'
 
     def handle(self, *args, **kwargs):
-        records_to_import = AccountTransaction.objects.filter(exported=0)
-        for r in records_to_import:
-            payload = build_record(r.id)
-            index_response = es.index(index=index_name, id=r.id, document=payload, pipeline=pipeline_name)
-            self.stdout.write(
-                self.style.SUCCESS('Successfully indexed record "%s"' % r.id)
-            )
-            r.exported = 1
-            r.save()
+        # Fetch un-exported AccountTransaction records
+        account_transactions_to_import = AccountTransaction.objects.filter(exported=0)
 
+        # Fetch un-exported BankingProducts records
         banking_products_to_import = BankingProducts.objects.filter(exported=0)
-        for r in banking_products_to_import:
-            payload = build_product(r.id)
-            index_response = es.index(index=product_index_name, id=r.id, document=payload, pipeline=pipeline_name)
-            r.exported = 1
-            r.save()
+
+        # Prepare bulk payload for AccountTransaction records
+        account_transaction_payloads = [
+            {
+                '_index': index_name,
+                '_id': str(r.id),
+                '_source': build_record(r.id),
+                '_pipeline': pipeline_name
+            }
+            for r in account_transactions_to_import
+        ]
+
+        # Prepare bulk payload for BankingProducts records
+        banking_product_payloads = [
+            {
+                '_index': product_index_name,
+                '_id': str(r.id),
+                '_source': build_product(r.id),
+                '_pipeline': pipeline_name
+            }
+            for r in banking_products_to_import
+        ]
+
+        # Combine both payloads
+        all_payloads = account_transaction_payloads + banking_product_payloads
+
+        # Perform bulk indexing
+        success, _ = bulk(es, all_payloads, refresh='wait_for')
+
+        # Update the exported flag for successfully indexed records
+        es.indices.refresh(index=index_name)
+        es.indices.refresh(index=product_index_name)
+        if success:
+            for r in account_transactions_to_import:
+                r.exported = 1
+                r.save()
+            for r in banking_products_to_import:
+                r.exported = 1
+                r.save()
+            self.stdout.write(self.style.SUCCESS('Indexing completed successfully.'))
+        else:
+            self.stdout.write(self.style.ERROR('Indexing failed.'))
