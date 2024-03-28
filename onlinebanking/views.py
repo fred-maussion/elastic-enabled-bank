@@ -368,28 +368,29 @@ def financial_analysis(request):
                         "purchase_value": hit["_source"]["transaction_value"]
                     }
                     transaction_info_list.append(transaction_info)
-        transaction_df = pd.DataFrame(transaction_info_list)
-        offer_summary = transaction_df.groupby('offer_name').agg(
-            {'purchase_value': 'sum', 'score': 'sum', 'offer_description': 'first'}).reset_index()
-        offer_summary_dict = offer_summary.to_dict(orient='records')
-        print(offer_summary_dict)
-
-        prompt_file = 'files/product_offer_prompt.txt'
-        with open(prompt_file, "r") as file:
-            prompt_contents_template = file.read()
-            prompt = prompt_contents_template.format(offer_summary=offer_summary)
-            augmented_prompt = prompt
-        messages = [
-            SystemMessage(
-                content="You are a helpful customer support agent."),
-            HumanMessage(content=augmented_prompt)
-        ]
-        sent_time = datetime.now(tz=timezone.utc)
-        chat_model = init_chat_model('azure')
-        answer = chat_model(messages).content
-        received_time = datetime.now(tz=timezone.utc)
-        log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
-                            'product offer')
+                transaction_df = pd.DataFrame(transaction_info_list)
+                offer_summary = transaction_df.groupby('offer_name').agg(
+                    {'purchase_value': 'sum', 'score': 'sum', 'offer_description': 'first'}).reset_index()
+                offer_summary_dict = offer_summary.to_dict(orient='records')
+                prompt_file = 'files/product_offer_prompt.txt'
+                with open(prompt_file, "r") as file:
+                    prompt_contents_template = file.read()
+                    prompt = prompt_contents_template.format(offer_summary=offer_summary)
+                    augmented_prompt = prompt
+                messages = [
+                    SystemMessage(
+                        content="You are a helpful customer support agent."),
+                    HumanMessage(content=augmented_prompt)
+                ]
+                sent_time = datetime.now(tz=timezone.utc)
+                chat_model = init_chat_model('azure')
+                answer = chat_model(messages).content
+                received_time = datetime.now(tz=timezone.utc)
+                log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
+                                    'product offer')
+            else:
+                offer_summary_dict = []
+                answer = "You're financial needs are currently perfectly met by your existing suite of products. Well done!"
         context = {
             "transaction_list": transaction_info_list,
             'categories': categories,
@@ -564,12 +565,13 @@ def landing(request):
     for a in account_list:
         latest_transaction = AccountTransaction.objects.filter(bank_account=a).order_by(
             '-transaction_date').first()
-        account_dict = {
-            'id': a.id,
-            'account_number': a.account_number,
-            'latest_balance': latest_transaction.closing_balance
-        }
-        account_dict_list.append(account_dict)
+        if latest_transaction:
+            account_dict = {
+                'id': a.id,
+                'account_number': a.account_number,
+                'latest_balance': latest_transaction.closing_balance
+            }
+            account_dict_list.append(account_dict)
     context = {
         'account_dict_list': account_dict_list,
         'payment_form': payment_form,

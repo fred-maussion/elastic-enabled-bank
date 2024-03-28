@@ -87,7 +87,18 @@ class BankingProducts(models.Model):
     account_type = models.ForeignKey(BankAccountType, on_delete=models.CASCADE, null=False)
     product_name = models.CharField(max_length=56, null=False)
     description = models.CharField(max_length=512, null=False)
+    generator_keywords = models.CharField(max_length=512, null=True)
     exported = models.BooleanField(default=False)
 
     def __str__(self):
         return self.product_name
+
+
+class DemoScenarios(models.Model):
+    scenario_name = models.CharField(max_length=56, null=False)
+    user_geography = models.CharField(max_length=56, null=False)
+    custom_attributes = models.CharField(max_length=128, null=False)
+    banking_products = models.ManyToManyField(BankingProducts)
+
+    def __str__(self):
+        return self.scenario_name

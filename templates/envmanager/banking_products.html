@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="accordion" id="banking_products">
+    <div class="accordion-header">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExisting" aria-expanded="false" aria-controls="collapseSummary">
+            Existing banking products
+        </button>
+        <div id="collapseExisting" class="accordion-collapse collapse" data-bs-parent="#existing_products">
+            <div class="accordion-body">
+                <ul class="list-group">
+                {% for i in banking_product_dict_list %}
+                    <li class="list-group-item">
+                        <h5>{{ i.product_name }}: {{ i.account }} account</h5>
+                        <p>{{ i.description }}</p>
+                        <p>Keywords: {{ i.keywords }}</p>
+                        <p>
+                            <a href="/envmanager/banking_products/delete/{{ i.banking_product_id }}" class="btn btn-primary">Delete</a>
+                            <a href="/envmanager/banking_products/generate/{{ i.banking_product_id }}" class="btn btn-primary">Generate transactions</a>
+                        </p>
+                    </li>
+
+                {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

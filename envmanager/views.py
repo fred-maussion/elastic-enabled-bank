@@ -3,7 +3,7 @@ import json
 from django.http import StreamingHttpResponse
 from django.shortcuts import render
 from onlinebanking.models import BankAccount, BankAccountType, AccountTransactionType, AccountTransaction, Customer, \
-    CustomerAddress, Retailer
+    CustomerAddress, Retailer, DemoScenarios, BankingProducts
 from django.core.management import call_command
 from elasticsearch import Elasticsearch
 import subprocess
@@ -24,6 +24,37 @@ kibana_url = getattr(settings, 'kibana_url', None)
 def manager(request):
     return render(request, 'envmanager/index.html')
 
+
+def banking_products(request, action=None, banking_product_id=None):
+    if action == 'delete':
+        product_to_delete = BankingProducts.objects.get(id=banking_product_id)
+        product_to_delete.delete()
+    elif action == 'generate':
+        args = [
+            arg for arg in [banking_product_id]
+            if arg is not None and arg != ''
+        ]
+        call_command('generate_scenario_data', *args)
+
+    banking_products_list = BankingProducts.objects.all()
+    banking_products_dict_list = []
+    for bp in banking_products_list:
+        banking_product_dict = {
+            'product_name': bp.product_name,
+            'banking_product_id': bp.id,
+            'description': bp.description,
+            'keywords': bp.generator_keywords,
+            'account': bp.account_type.account_type
+        }
+        banking_products_dict_list.append(banking_product_dict)
+    context = {
+        'banking_product_dict_list': banking_products_dict_list
+    }
+    return render(request, 'envmanager/banking_products.html', context=context)
+
+def demo_scenarios(request):
+
+    return render(request, 'envmanager/demo_scenarios.html')
 
 def cluster(request):
     print(f"elastic cloud id: {elastic_cloud_id}")
