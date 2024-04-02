@@ -134,7 +134,7 @@ class Command(BaseCommand):
         all_payloads = account_transaction_payloads + banking_product_payloads
 
         # Perform bulk indexing
-        success, _ = bulk(es, all_payloads, refresh='wait_for')
+        success, _ = bulk(es, all_payloads)
 
         # Update the exported flag for successfully indexed records
         es.indices.refresh(index=index_name)

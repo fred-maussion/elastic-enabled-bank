@@ -60,8 +60,9 @@ def generate_inbound_payment(bank_account, transaction_date, transaction_value, 
     return new_transaction
 
 
-def generate_outbound_payment(bank_account, transaction_date, transaction_value):
-    description = f"Payment made from {bank_account} to {person.first_name()} {person.last_name()}, " \
+def generate_outbound_payment(bank_account, transaction_date, transaction_value, keywords):
+    keyword = random.choice(keywords)
+    description = f"Payment made from {bank_account} to {person.first_name()} {person.last_name()} for { keyword }, " \
                   f"{finance.company()}: {uuid.uuid4()}"
     transaction_type = AccountTransactionType.objects.filter(transaction_type='Debit').first()
     transaction_category = TransactionCategory.objects.filter(category_name='EFT').first()
@@ -90,7 +91,8 @@ def generate_outbound_payment(bank_account, transaction_date, transaction_value)
     return
 
 
-def generate_purchase(bank_account, transaction_date, transaction_value):
+def generate_purchase(bank_account, transaction_date, transaction_value, keywords):
+    keyword = random.choice(keywords)
     transaction_type = AccountTransactionType.objects.filter(transaction_type='Debit').first()
     transaction_category = TransactionCategory.objects.filter(category_name='Purchase').first()
     latest_transaction = AccountTransaction.objects.filter(
@@ -109,7 +111,7 @@ def generate_purchase(bank_account, transaction_date, transaction_value):
     address = generate_address()
     city = address['city']
     state = address['state']
-    description = f"Purchase at merchant: {retailer.name}, location: {city},{state}"
+    description = f"Purchase at merchant: {retailer.name}, location: {city},{state}, meta: {keyword}"
 
     AccountTransaction.objects.create(
         bank_account=bank_account,
@@ -155,13 +157,10 @@ class Command(BaseCommand):
                                                           account_number=new_account_number,
                                                           customer=customer)
             bank_account = new_bank_account
-            # find the oldest transaction
+
         oldest_record = AccountTransaction.objects.order_by('transaction_date').first().transaction_date
         newest_record = AccountTransaction.objects.order_by('-transaction_date').first().transaction_date
         delta = newest_record - oldest_record
-        print(delta.days)
-        min_transaction_value = 100
-        max_transaction_value = 500
         number_of_transactions = random.randint(0, delta.days)
         counter = 0
 
@@ -173,11 +172,22 @@ class Command(BaseCommand):
                 max_transaction_value = 500
                 transaction_value = random.randint(min_transaction_value, max_transaction_value)
                 keyword_list = banking_product.generator_keywords.split(',')
-                new_transaction = generate_inbound_payment(bank_account, random_transaction_date, transaction_value, keyword_list)
-                print(f'{random_transaction_date} {bank_account} Savings {new_transaction.id}')
-
+                generate_inbound_payment(bank_account, random_transaction_date, transaction_value, keyword_list)
             elif str(banking_product.account_type) == 'Transmission':
-                print('Transmission')
+                min_transaction_value = 100
+                max_transaction_value = 500
+                transaction_value = random.randint(min_transaction_value, max_transaction_value)
+                keyword_list = banking_product.generator_keywords.split(',')
+                transaction_type = random.choice('EFT', 'Purchase')
+                if transaction_type == 'EFT':
+                    generate_outbound_payment(bank_account, random_transaction_date, transaction_value, keyword_list)
+                elif transaction_type == 'Purchase':
+                    generate_purchase(bank_account, random_transaction_date, transaction_value,
+                                      keyword_list)
             elif str(banking_product.account_type) == 'Credit':
-                print('Credit')
+                min_transaction_value = 10
+                max_transaction_value = 180
+                transaction_value = random.randint(min_transaction_value, max_transaction_value)
+                keyword_list = banking_product.generator_keywords.split(',')
+                generate_purchase(bank_account, random_transaction_date, transaction_value, keyword_list)
             counter = counter + 1

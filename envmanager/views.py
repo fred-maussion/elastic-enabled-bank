@@ -35,6 +35,7 @@ def banking_products(request, action=None, banking_product_id=None):
             if arg is not None and arg != ''
         ]
         call_command('generate_scenario_data', *args)
+        call_command('elastic_export')
 
     banking_products_list = BankingProducts.objects.all()
     banking_products_dict_list = []
@@ -200,31 +201,34 @@ def index_setup(request):
         transaction_index_mapping = read_json_file(f'files/transaction_index_mapping.json')
         transaction_index_settings = read_json_file(f'files/transaction_index_settings.json')
         product_index_mapping = read_json_file(f'files/product_index_mapping.json')
+        product_index_settings = read_json_file(f'files/product_index_settings.json')
         llm_audit_index_mapping = read_json_file(f'files/llm_audit_log_mapping.json')
         pipeline_processors = read_json_file(f'files/transaction_index_pipeline.json')
 
-        # transaction index
+        # destroy indices
         index_exists = es.indices.exists(index=index_name)
         if index_exists:
             es.indices.delete(index=index_name)
-        es.indices.create(index=index_name, mappings=transaction_index_mapping, settings=transaction_index_settings)
 
-        # product index
         product_index_exists = es.indices.exists(index=product_index_name)
         if product_index_exists:
             es.indices.delete(index=product_index_name)
-        es.indices.create(index=product_index_name, mappings=product_index_mapping)
 
-        # llm_audit_log
         llm_index_exists = es.indices.exists(index=llm_audit_index_name)
         if llm_index_exists:
             es.indices.delete(index=llm_audit_index_name)
-        es.indices.create(index=llm_audit_index_name, mappings=llm_audit_index_mapping)
-        # ingest pipeline
+
+        # destroy pipeline
         pipeline_exists = es.ingest.get_pipeline(id=pipeline_name, ignore=[404])
         if pipeline_exists:
             es.ingest.delete_pipeline(id=pipeline_name)
+
+        # rebuild it all
         es.ingest.put_pipeline(id=pipeline_name, processors=pipeline_processors)
+        es.indices.create(index=index_name, mappings=transaction_index_mapping, settings=transaction_index_settings)
+        es.indices.create(index=product_index_name, mappings=product_index_mapping, settings=product_index_settings)
+        es.indices.create(index=llm_audit_index_name, mappings=llm_audit_index_mapping)
+
 
         context = {
             'view_name': 'created'

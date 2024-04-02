@@ -441,7 +441,8 @@ def search(request):
 
         field_list = ["transaction_date", "description", "transaction_value",
                       "transaction_category", "bank_account_number", "opening_balance", "closing_balance", "_score"]
-        results = es.search(index=index_name, query=query, size=100, min_score=10)
+        results = es.search(index=index_name, query=query, size=100, min_score=1)
+        print(results)
         response_data = [{"_score": hit["_score"], **hit["_source"]} for hit in results["hits"]["hits"]]
         transaction_results = []
         # Check if there are hits
