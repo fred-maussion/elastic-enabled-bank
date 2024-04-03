@@ -98,7 +98,7 @@ class DemoScenarios(models.Model):
     scenario_name = models.CharField(max_length=56, null=False)
     user_geography = models.CharField(max_length=56, null=False)
     custom_attributes = models.CharField(max_length=128, null=False)
-    banking_products = models.ManyToManyField(BankingProducts)
+    active = models.BooleanField(null=True)
 
     def __str__(self):
         return self.scenario_name

@@ -1,5 +1,61 @@
 {% extends 'base.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
+<div class="row mb-3">
+    <form method="post" action="{% url 'demo_scenarios' %}" name="edit_demo_form">
+        {% csrf_token %}
+        <div class="row mb-3">
+            <label class="col-sm-3 col-form-label">Demo scenario name</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" value="{{ scenario_to_edit.scenario_name }}" name="scenario_name" placeholder="What do we call this scenario?">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label class="col-sm-3 col-form-label">Geography</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" value="{{ scenario_to_edit.user_geography }}" name="user_geography" placeholder="Where does this customer live?">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label class="col-sm-3 col-form-label">Customer attributes</label>
+            <div class="col-sm-9">
+                <textarea class="form-control" name="custom_attributes" placeholder="This will be included in the LLM prompt as-is to provide context about the user.">{{ scenario_to_edit.custom_attributes }}</textarea>
+            </div>
+        </div>
+        <input type="hidden" name="demo_scenario_id" value="{{ scenario_to_edit.id }}">
+        <div class="row mb-3">
+            <div class="col-sm-9">
+                <input type="submit" class="btn btn-primary">
+            </div>
+        </div>
+    </form>
+</div>
+<pre></pre>
+<div class="accordion" id="demo_scenarios">
+    <div class="accordion-header">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExisting" aria-expanded="false" aria-controls="collapseSummary">
+            Existing demo scenarios
+        </button>
+        <div id="collapseExisting" class="accordion-collapse collapse" data-bs-parent="#existing_scenarios">
+            <div class="accordion-body">
+                <ul class="list-group">
+                {% for i in demo_scenario_dict_list %}
+                    <li class="list-group-item">
+                        <h5>{{ i.scenario_name }}</h5>
+                        <p>{% if i.active %}This scenario is active{% else %}This scenario is not active{% endif %}</p>
+                        <p>Geo: {{ i.user_geography }}</p>
+                        <p>Prompt: {{ i.custom_attributes }}</p>
+                        <p>
+                            <a href="/envmanager/demo_scenarios/edit/{{ i.demo_scenario_id }}" class="btn btn-primary">Edit product</a>
+                            <a href="/envmanager/demo_scenarios/delete/{{ i.demo_scenario_id }}" class="btn btn-primary">Delete</a>
+                            <a href="/envmanager/demo_scenarios/activate/{{ i.demo_scenario_id }}" class="btn btn-primary">Activate</a>
+                        </p>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
 
+        </div>
+    </div>
+</div>
 {% endblock %}

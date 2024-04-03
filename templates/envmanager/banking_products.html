@@ -1,6 +1,46 @@
 {% extends 'base.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
+<div class="row mb-3">
+    <form method="post" action="{% url 'banking_products' %}" name="edit_product_form">
+        {% csrf_token %}
+        <div class="row mb-3">
+            <label class="col-sm-3 col-form-label">Banking product name</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" value="{{ product_to_edit.product_name }}" name="product_name">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label class="col-sm-3 col-form-label">Banking product description</label>
+            <div class="col-sm-9">
+                <textarea class="form-control" name="description" placeholder="The description of the offer is used to perform a semantic search against the users transaction history">{{ product_to_edit.description }}</textarea>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label class="col-sm-3 col-form-label">Keywords</label>
+            <div class="col-sm-9">
+                <textarea name="generator_keywords" class="form-control" placeholder="These keywords will be used to generate transactions that match your description">{{ product_to_edit.generator_keywords }}</textarea>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label class="col-sm-3 col-form-label">Account Type</label>
+            <div class="col-sm-9">
+                <select class="form-control" name="account_type">
+                    {% for account_type in account_types %}
+                        <option name="account_type" value="{{ account_type.id }}" class="form-control" {% if account_type.id == product_to_edit.account_type.id %}selected{% endif %}>{{ account_type.account_type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <input type="hidden" name="bank_offer_id" value="{{ product_to_edit.id }}">
+        <div class="row mb-3">
+            <div class="col-sm-9">
+                <input type="submit" class="btn btn-primary">
+            </div>
+        </div>
+    </form>
+</div>
+<pre></pre>
 <div class="accordion" id="banking_products">
     <div class="accordion-header">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExisting" aria-expanded="false" aria-controls="collapseSummary">
@@ -15,6 +55,7 @@
                         <p>{{ i.description }}</p>
                         <p>Keywords: {{ i.keywords }}</p>
                         <p>
+                            <a href="/envmanager/banking_products/edit/{{ i.banking_product_id }}" class="btn btn-primary">Edit product</a>
                             <a href="/envmanager/banking_products/delete/{{ i.banking_product_id }}" class="btn btn-primary">Delete</a>
                             <a href="/envmanager/banking_products/generate/{{ i.banking_product_id }}" class="btn btn-primary">Generate transactions</a>
                         </p>

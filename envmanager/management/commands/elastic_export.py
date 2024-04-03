@@ -102,50 +102,45 @@ class Command(BaseCommand):
     help = 'Export un-exported records to Elasticsearch'
 
     def handle(self, *args, **kwargs):
-        # Fetch un-exported AccountTransaction records
-        account_transactions_to_import = AccountTransaction.objects.filter(exported=0)
-
-        # Fetch un-exported BankingProducts records
         banking_products_to_import = BankingProducts.objects.filter(exported=0)
+        for r in banking_products_to_import:
+            payload = build_product(r.id)
+            index_response = es.index(index=product_index_name, id=r.id, document=payload, pipeline=pipeline_name)
+            r.exported = 1
+            r.save()
 
-        # Prepare bulk payload for AccountTransaction records
-        account_transaction_payloads = [
-            {
-                '_index': index_name,
-                '_id': str(r.id),
-                '_source': build_record(r.id),
-                '_pipeline': pipeline_name
-            }
-            for r in account_transactions_to_import
-        ]
 
-        # Prepare bulk payload for BankingProducts records
-        banking_product_payloads = [
-            {
-                '_index': product_index_name,
-                '_id': str(r.id),
-                '_source': build_product(r.id),
-                '_pipeline': pipeline_name
-            }
-            for r in banking_products_to_import
-        ]
+        while True:
+            # Fetch un-exported AccountTransaction records in batches of 100
+            account_transactions_to_import = AccountTransaction.objects.filter(exported=0)[:100]
 
-        # Combine both payloads
-        all_payloads = account_transaction_payloads + banking_product_payloads
+            # If there are no more records left, exit the loop
+            if not account_transactions_to_import:
+                break
 
-        # Perform bulk indexing
-        success, _ = bulk(es, all_payloads)
+            # Prepare bulk payload for AccountTransaction records
+            account_transaction_payloads = [
+                {
+                    '_index': index_name,
+                    '_id': str(r.id),
+                    '_source': build_record(r.id),
+                    '_pipeline': pipeline_name
+                }
+                for r in account_transactions_to_import
+            ]
 
-        # Update the exported flag for successfully indexed records
-        es.indices.refresh(index=index_name)
-        es.indices.refresh(index=product_index_name)
-        if success:
-            for r in account_transactions_to_import:
-                r.exported = 1
-                r.save()
-            for r in banking_products_to_import:
-                r.exported = 1
-                r.save()
-            self.stdout.write(self.style.SUCCESS('Indexing completed successfully.'))
-        else:
-            self.stdout.write(self.style.ERROR('Indexing failed.'))
+            # Perform bulk indexing
+            success, _ = bulk(es, account_transaction_payloads)
+
+            # Update the exported flag for successfully indexed records
+            if success:
+                for r in account_transactions_to_import:
+                    r.exported = 1
+                    r.save()
+                self.stdout.write(self.style.SUCCESS('Indexing completed successfully.'))
+            else:
+                self.stdout.write(self.style.ERROR('Indexing failed.'))
+
+            es.indices.refresh(index=index_name)
+
+

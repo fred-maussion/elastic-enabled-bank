@@ -1,7 +1,7 @@
 import json
 
 from django.http import StreamingHttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from onlinebanking.models import BankAccount, BankAccountType, AccountTransactionType, AccountTransaction, Customer, \
     CustomerAddress, Retailer, DemoScenarios, BankingProducts
 from django.core.management import call_command
@@ -25,10 +25,72 @@ def manager(request):
     return render(request, 'envmanager/index.html')
 
 
+def demo_scenarios(request, action=None, demo_scenario_id=None):
+    if request.method == 'POST':
+        id_to_update = request.POST.get('demo_scenario_id')
+        if id_to_update:
+            scenario_to_edit = DemoScenarios.objects.get(id=id_to_update)
+            scenario_to_edit.product_name = request.POST.get('scenario_name')
+            scenario_to_edit.custom_attributes = request.POST.get('custom_attributes')
+            scenario_to_edit.user_geography = request.POST.get('user_geography')
+            scenario_to_edit.save()
+        else:
+            DemoScenarios.objects.create(
+                scenario_name=request.POST.get('scenario_name'),
+                custom_attributes=request.POST.get('custom_attributes'),
+                user_geography=request.POST.get('user_geography')
+            )
+    scenario_to_edit = []
+    if action == 'delete':
+        scenario_to_delete = DemoScenarios.objects.get(id=demo_scenario_id)
+        scenario_to_delete.delete()
+    elif action == 'edit':
+        scenario_to_edit = DemoScenarios.objects.get(id=demo_scenario_id)
+    elif action == 'activate':
+        DemoScenarios.objects.all().update(active=False)
+        scenario_to_activate = DemoScenarios.objects.get(id=demo_scenario_id)
+        scenario_to_activate.active = True
+        scenario_to_activate.save()
+    demo_scenario_list = DemoScenarios.objects.all()
+    demo_scenario_dict_list = []
+    for ds in demo_scenario_list:
+        demo_scenario_dict = {
+            "demo_scenario_id": ds.id,
+            "scenario_name": ds.scenario_name,
+            "user_geography": ds.user_geography,
+            "custom_attributes": ds.custom_attributes,
+            "active": ds.active
+        }
+        demo_scenario_dict_list.append(demo_scenario_dict)
+    context = {
+        "demo_scenario_dict_list": demo_scenario_dict_list,
+        "scenario_to_edit": scenario_to_edit
+    }
+    return render(request, 'envmanager/demo_scenarios.html', context=context)
+
+
 def banking_products(request, action=None, banking_product_id=None):
+    if request.method == 'POST':
+        id_to_update = request.POST.get('bank_offer_id')
+        product_to_edit = BankingProducts.objects.get(id=id_to_update)
+        product_to_edit.product_name = request.POST.get('product_name')
+        product_to_edit.description = request.POST.get('description')
+        product_to_edit.generator_keywords = request.POST.get('generator_keywords')
+        product_to_edit.account_type_id = request.POST.get('account_type')
+        product_to_edit.exported = 0
+        product_to_edit.save()
+        return redirect('banking_products')
+    account_types = BankAccountType.objects.all()
+    product_to_edit = []
     if action == 'delete':
         product_to_delete = BankingProducts.objects.get(id=banking_product_id)
         product_to_delete.delete()
+    elif action == 'edit':
+        args = [
+            arg for arg in [banking_product_id]
+            if arg is not None and arg != ''
+        ]
+        product_to_edit = BankingProducts.objects.get(id=banking_product_id)
     elif action == 'generate':
         args = [
             arg for arg in [banking_product_id]
@@ -36,7 +98,6 @@ def banking_products(request, action=None, banking_product_id=None):
         ]
         call_command('generate_scenario_data', *args)
         call_command('elastic_export')
-
     banking_products_list = BankingProducts.objects.all()
     banking_products_dict_list = []
     for bp in banking_products_list:
@@ -49,13 +110,13 @@ def banking_products(request, action=None, banking_product_id=None):
         }
         banking_products_dict_list.append(banking_product_dict)
     context = {
-        'banking_product_dict_list': banking_products_dict_list
+        'banking_product_dict_list': banking_products_dict_list,
+        'account_types': account_types,
+        'product_to_edit': product_to_edit
     }
     return render(request, 'envmanager/banking_products.html', context=context)
 
-def demo_scenarios(request):
 
-    return render(request, 'envmanager/demo_scenarios.html')
 
 def cluster(request):
     print(f"elastic cloud id: {elastic_cloud_id}")
@@ -228,7 +289,6 @@ def index_setup(request):
         es.indices.create(index=index_name, mappings=transaction_index_mapping, settings=transaction_index_settings)
         es.indices.create(index=product_index_name, mappings=product_index_mapping, settings=product_index_settings)
         es.indices.create(index=llm_audit_index_name, mappings=llm_audit_index_mapping)
-
 
         context = {
             'view_name': 'created'

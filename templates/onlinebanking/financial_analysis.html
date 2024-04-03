@@ -15,8 +15,11 @@
 
         <form method="post">
             {% csrf_token %}
-            <p>Do you want to see the products and services best suited to your spending habits? <input type="checkbox" name="interested" checked></p>
-            <button class="btn btn-primary" type="submit">Yes I am! Tell me more</button>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="interested" role="switch" id="flexSwitchCheckChecked" checked>
+              <label class="form-check-label" for="flexSwitchCheckChecked">Click here if you want to see the products and services best suited to your spending habits.</label>
+            </div>
+            <button class="btn btn-primary" type="submit">Submit</button>
         </form>
         {% if answer %}
             <pre></pre>

@@ -1,7 +1,7 @@
 import json
 import googlemaps
 from django.shortcuts import render
-from .models import BankAccount, AccountTransaction, Customer, Retailer, BankingProducts
+from .models import BankAccount, AccountTransaction, Customer, Retailer, BankingProducts, DemoScenarios
 from .forms import AccountTransactionForm, AccountTransferForm
 from elasticsearch import Elasticsearch
 from langchain.chat_models import AzureChatOpenAI
@@ -320,77 +320,87 @@ def financial_analysis(request):
     }
 
     if request.method == 'POST':
-        # get current banking product offers
-        all_offers = BankingProducts.objects.all()
-        demo_user = Customer.objects.filter(id=customer_id).first()
         transaction_info_list = []
-        for offer in all_offers:
-            offer_query = {
-                "bool": {
-                    "should": [
-                        {
-                            "text_expansion": {
-                                "ml.inference.description_expanded.predicted_value": {
-                                    "model_id": model_id,
-                                    "model_text": offer.description,
-                                    "boost": 1
+        if request.POST.get('interested'):
+            # get current banking product offers
+            all_offers = BankingProducts.objects.all()
+            demo_user = Customer.objects.filter(id=customer_id).first()
+            for offer in all_offers:
+                offer_query = {
+                    "bool": {
+                        "should": [
+                            {
+                                "text_expansion": {
+                                    "ml.inference.description_expanded.predicted_value": {
+                                        "model_id": model_id,
+                                        "model_text": offer.description,
+                                        "boost": 1
+                                    }
                                 }
-                            }
-                        },
-                        {
-                            "match": {
-                                "description": {
-                                    "query": offer.description,
-                                    "boost": 1
-                                }
+                            },
+                            {
+                                "match": {
+                                    "description": {
+                                        "query": offer.description,
+                                        "boost": 1
+                                    }
 
+                                }
                             }
-                        }
-                    ],
-                    "filter": {
-                        "term": {
-                            "customer_email.keyword": demo_user.email
+                        ],
+                        "filter": {
+                            "term": {
+                                "customer_email.keyword": demo_user.email
+                            }
                         }
                     }
                 }
-            }
-            offer_field_list = ["transaction_date", "description", "transaction_value", "transaction_category",
-                                "retail_category"]
-            matching_transactions = es.search(index=index_name, query=offer_query, min_score=10,
-                                              fields=offer_field_list)
-            if matching_transactions['hits']['total']['value'] > 1:
-                for hit in matching_transactions['hits']['hits']:
-                    transaction_info = {
-                        "score": hit["_score"],
-                        "offer_name": offer.product_name,
-                        "offer_description": offer.description,
-                        "transaction_description": hit["_source"]["description"],
-                        "purchase_value": hit["_source"]["transaction_value"]
+                offer_field_list = ["transaction_date", "description", "transaction_value", "transaction_category",
+                                    "retail_category"]
+                matching_transactions = es.search(index=index_name, query=offer_query, min_score=10,
+                                                  fields=offer_field_list)
+                if matching_transactions['hits']['total']['value'] > 1:
+                    for hit in matching_transactions['hits']['hits']:
+                        transaction_info = {
+                            "score": hit["_score"],
+                            "offer_name": offer.product_name,
+                            "offer_description": offer.description,
+                            "transaction_description": hit["_source"]["description"],
+                            "purchase_value": hit["_source"]["transaction_value"]
+                        }
+                        transaction_info_list.append(transaction_info)
+                    transaction_df = pd.DataFrame(transaction_info_list)
+                    offer_summary = transaction_df.groupby('offer_name').agg(
+                        {'purchase_value': 'sum', 'score': 'sum', 'offer_description': 'first'}).reset_index()
+                    offer_summary_dict = offer_summary.to_dict(orient='records')
+                    demo_scenario_details = DemoScenarios.objects.get(active=True)
+                    demo_scenario_dict = {
+                        "My region": demo_scenario_details.user_geography,
+                        "Facts about me": demo_scenario_details.custom_attributes
                     }
-                    transaction_info_list.append(transaction_info)
-                transaction_df = pd.DataFrame(transaction_info_list)
-                offer_summary = transaction_df.groupby('offer_name').agg(
-                    {'purchase_value': 'sum', 'score': 'sum', 'offer_description': 'first'}).reset_index()
-                offer_summary_dict = offer_summary.to_dict(orient='records')
-                prompt_file = 'files/product_offer_prompt.txt'
-                with open(prompt_file, "r") as file:
-                    prompt_contents_template = file.read()
-                    prompt = prompt_contents_template.format(offer_summary=offer_summary)
-                    augmented_prompt = prompt
-                messages = [
-                    SystemMessage(
-                        content="You are a helpful customer support agent."),
-                    HumanMessage(content=augmented_prompt)
-                ]
-                sent_time = datetime.now(tz=timezone.utc)
-                chat_model = init_chat_model('azure')
-                answer = chat_model(messages).content
-                received_time = datetime.now(tz=timezone.utc)
-                log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
-                                    'product offer')
-            else:
-                offer_summary_dict = []
-                answer = "You're financial needs are currently perfectly met by your existing suite of products. Well done!"
+                    prompt_file = 'files/product_offer_prompt.txt'
+                    with open(prompt_file, "r") as file:
+                        prompt_contents_template = file.read()
+                        prompt = prompt_contents_template.format(offer_summary=offer_summary, demo_scenario=demo_scenario_dict)
+                        augmented_prompt = prompt
+                    messages = [
+                        SystemMessage(
+                            content="You are a helpful customer support agent."),
+                        HumanMessage(content=augmented_prompt)
+                    ]
+                    sent_time = datetime.now(tz=timezone.utc)
+                    chat_model = init_chat_model('azure')
+                    answer = chat_model(messages).content
+                    received_time = datetime.now(tz=timezone.utc)
+                    log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
+                                        'product offer')
+                else:
+                    offer_summary_dict = []
+                    answer = "Your financial needs are currently perfectly met by your existing suite of products. Well done!"
+        else:
+            offer_summary_dict = []
+            answer = "You have chosen not to review your financial products."
+
         context = {
             "transaction_list": transaction_info_list,
             'categories': categories,
