@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
   <h2>The Elastic-enabled bank</h2>
-  <div class="accordion" id="semantic_search">
+  <div class="accordion rounded shadow-lg" id="semantic_search">
     <div class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNLSearch" aria-expanded="false" aria-controls="collapseNLSearch">
         Natural language search
@@ -26,40 +26,37 @@
     </div>
   </div>
   <pre></pre>
-  <div class="accordion" id="crossSell">
+  <div class="accordion rounded shadow-lg" id="crossSell">
     <div class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsecrossSell" aria-expanded="false" aria-controls="collapsecrossSell">
         Contextual offers based on customer transactions
       </button>
       <div id="collapsecrossSell" class="accordion-collapse collapse" data-bs-parent="#crossSell">
         <div class="accordion-body">
-          <p>
-            This section shows two features:
-            <ul class="list-group">
-              <li class="list-group-item">The aggregation of transactions by category across multiple accounts, which is only
-              possible by unifying data in real time.</li>
-              <li class="list-group-item">Vectorsearch for similarity, which is used to provide contextual product and service recommendations.
-                By understanding the semantic meaning of transaction descriptions, we search against products and services that our bank offers,
-            and then return a tailored message using generative AI.
-              </li>
-            </ul>
-          </p>
-          <p>
-            The ability to leverage Vectorsearch also enables contextual product and service recommendations.
-            By understanding the semantic meaning of transaction descriptions, we search against products and services that the bank offers,
-            and then based on the similarity of the offer we return a tailored message using generative AI based on information that we know about the
-            customer and their spending habits.
-          </p>
+          This section shows two features:
+          <ul class="list-group">
+            <li class="list-group-item">The aggregation of transactions by category across multiple accounts, which is only
+            possible by unifying data in real time.</li>
+            <li class="list-group-item">Vectorsearch for similarity, which is used to provide contextual product and service recommendations.
+              By understanding the semantic meaning of transaction descriptions, we search against products and services that our bank offers,
+          and then return a tailored message using generative AI.
+              <p>
+                The ability to leverage Vectorsearch also enables contextual product and service recommendations.
+                By understanding the semantic meaning of transaction descriptions, we search against products and services that the bank offers,
+                and then based on the similarity of the offer we return a tailored message using generative AI based on information that we know about the
+                customer and their spending habits.
+              </p>
+            </li>
+          </ul>
           <ul class="list-group">
             <li class="list-group-item"> <a href="/onlinebanking/financial_analysis">Financial summary</a></li>
           </ul>
-
         </div>
       </div>
     </div>
   </div>
   <pre></pre>
-  <div class="accordion" id="customer_support">
+  <div class="accordion rounded shadow-lg" id="customer_support">
     <div class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCustomerSupport" aria-expanded="false" aria-controls="collapseCustomerSupport">
         Customer support
@@ -79,7 +76,7 @@
     </div>
   </div>
   <pre></pre>
-  <div class="accordion" id="kibana">
+  <div class="accordion rounded shadow-lg" id="kibana">
     <div class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseKibana" aria-expanded="false" aria-controls="collapseKibana">
         Dashboards

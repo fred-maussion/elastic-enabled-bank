@@ -39,8 +39,9 @@ pipeline_name = getattr(settings, 'TRANSACTION_PIPELINE_NAME', None)
 product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
 customer_support_index = getattr(settings, 'CUSTOMER_SUPPORT_INDEX', None)
 logging_index = getattr(settings, 'LLM_AUDIT_LOG_INDEX', None)
+logging_pipeline = getattr(settings, 'LLM_AUDIT_LOG_INDEX_PIPELINE_NAME', None)
 llm_provider = getattr(settings, 'LLM_PROVIDER', None)
-llm_temperature = 0
+llm_temperature = 1
 
 # calculate the cost of an LLM interaction
 def calculate_cost(message, type):
@@ -87,7 +88,7 @@ def log_llm_interaction(prompt, response, sent_time, received_time, answer_type,
         "llm_temperature": llm_temperature
 
     }
-    response = es.index(index=logging_index, id=log_id, document=body)
+    response = es.index(index=logging_index, id=log_id, document=body, pipeline=logging_pipeline)
     return
 
 
@@ -251,14 +252,15 @@ def customer_support(request):
                 documents.append(doc_info)
         context_documents = str(documents)
         context_documents = truncate_text(context_documents, 12000)
-        augmented_prompt = f"""Please answer the following question using only the documents provided as context: {question}. 
-        Context: 
-        {context_documents}
-        Format your response using Bootstrap
-        """
+        prompt_file = 'files/customer_support_prompt.txt'
+        with open(prompt_file, "r") as file:
+            prompt_contents_template = file.read()
+            prompt = prompt_contents_template.format(question=question, context_documents=context_documents)
+            augmented_prompt = prompt
+
         messages = [
             SystemMessage(
-                content="You are a helpful customer support agent. Speak with a Pirate accent when you respond."),
+                content="You are a helpful customer support agent."),
             HumanMessage(content=augmented_prompt)
         ]
         sent_time = datetime.now(tz=timezone.utc)
@@ -413,7 +415,6 @@ def financial_analysis(request):
 
 def search(request):
     question = ""
-    summary = ""
     if request.method == 'POST':
         question = request.POST.get('question')
         demo_user = Customer.objects.filter(id=customer_id).first()
@@ -463,29 +464,11 @@ def search(request):
                 for hit in response_data:
                     doc_data = {field: hit[field] for field in field_list if field in hit}
                     transaction_results.append(doc_data)
-            if 'summarise' in request.POST:
-                prompt_file = 'files/summarise_prompt.txt'
-                with open(prompt_file, "r") as file:
-                    prompt_contents_template = file.read()
-                prompt = prompt_contents_template.format(question=question, transaction_results=transaction_results)
-                augmented_prompt = prompt
-                messages = [
-                    SystemMessage(
-                        content="You are a helpful customer support agent."),
-                    HumanMessage(content=augmented_prompt)
-                ]
-                sent_time = datetime.now(tz=timezone.utc)
-                chat_model = init_chat_model('azure')
-                summary = chat_model(messages).content
-                received_time = datetime.now(tz=timezone.utc)
-                log_llm_interaction(augmented_prompt, summary, sent_time, received_time, 'original', 'azure', model_id,
-                                    'summarise')
     else:
         transaction_results = []
     context = {
         'question': question,
         'results': transaction_results,
-        'summary': summary
     }
     return render(request, "onlinebanking/search.html", context)
 

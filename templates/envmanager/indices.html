@@ -3,15 +3,22 @@
 {% block content %}
     {% if view_name == 'confirmation' %}
         <div class="container">
-            <h5>The following indices exists with the following mapping:</h5>
-                <b>Transaction Index:</b> {{ transaction_mapping }}
-                <pre></pre>
-                <b>Product Index:</b> {{ product_mapping }}
-                <pre></pre>
-                <b>LLM Audit Index:</b> {{ llm_audit_mapping }}
-                <pre></pre>
-            <h5>And the following pipeline exists:</h5>
-                {{ pipeline }}
+            <h5 class="display-6">The following indices exists with the following mapping:</h5>
+            <ul class="list-group">
+                <li class="list-group-item">Transaction Index:</li>
+                <li class="list-group-item">{{ transaction_mapping }}</li>
+                <li class="list-group-item">Product Index:</li>
+                <li class="list-group-item">{{ product_mapping }}</li>
+                <li class="list-group-item">LLM Audit Index:</li>
+                <li class="list-group-item">{{ llm_audit_mapping }}</li>
+            </ul>
+            <h5 class="display-6">And the following pipelines exist</h5>
+                <ul class="list-group">
+                    <li class="list-group-item">Transaction pipeline</li>
+                    <li class="list-group-item">{{ pipeline }}</li>
+                    <li class="list-group-item">Logging pipeline</li>
+                    <li class="list-group-item">{{ llm_audit_log_pipeline }}</li>
+                </ul>
             <pre></pre>
         </div>
     {% elif view_name == 'created' %}

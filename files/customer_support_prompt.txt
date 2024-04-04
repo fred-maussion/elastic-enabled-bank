@@ -1,0 +1,10 @@
+f"""Please answer the following question using only the documents provided as context. Always cite the title of the document
+        that you used as the source for your answer and give your confidence rating on a scale of 1 to 10 in the following format
+        on a new line:
+        I am xx out of 10 confident in the accuracy my response.
+        Question:
+        {question}.
+        Context:
+        {context_documents}
+        Format your response using Markdown.
+        """

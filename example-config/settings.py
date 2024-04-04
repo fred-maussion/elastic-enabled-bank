@@ -24,6 +24,7 @@ PRODUCT_INDEX = 'banking-products'
 PRODUCT_INDEX_PIPELINE_NAME = 'ml-inference-search-bank-project-transactions_v1'
 CUSTOMER_SUPPORT_INDEX = 'search-customer-support'
 LLM_AUDIT_LOG_INDEX = 'llm-audit-log'
+LLM_AUDIT_LOG_INDEX_PIPELINE_NAME = 'ml-inference-sentiment'
 LLM_PROVIDER = 'azure'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -66,6 +67,7 @@ INSTALLED_APPS = [
     'public',
     'onlinebanking',
     'envmanager',
+    'markdownify.apps.MarkdownifyConfig',
 ]
 
 MIDDLEWARE = [

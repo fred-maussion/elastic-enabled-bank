@@ -15,36 +15,4 @@
     {% else %}
         <h5>Unable to connect to Elasticsearch, please validate your credentials</h5>
     {% endif %}
-    <pre></pre>
-    <div class="container">
-        <h5>Cluster details as per your .env file:*</h5>
-        {% csrf_token %}
-        <div class="row g-3 align-items-left">
-            <div class="col-md-2">
-                Cluster ID
-            </div>
-            <div class="col-md-10">
-                {{ cloud_id }}
-            </div>
-            <div class="col-md-2">
-                Kibana URL
-            </div>
-            <div class="col-md-10">
-                {{ kibana_url }}
-            </div>
-            <div class="col-md-2">
-                Username
-            </div>
-            <div class="col-md-3">
-                {{ elastic_user }}
-            </div>
-            <div class="col-md-2">
-                Password
-            </div>
-            <div class="col-md-3">
-                {{ elastic_password }}
-            </div>
-        </div>
-
-    </div>
 {% endblock %}

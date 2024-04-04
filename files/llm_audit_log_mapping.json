@@ -43,6 +43,19 @@
         },
         "llm_temperature": {
             "type": "float"
+        },
+        "ml.inference": {
+            "properties":{
+                "response.model_id": {
+                    "type": "keyword"
+                },
+                "response.predicted_value": {
+                    "type": "keyword"
+                },
+                "response.prediction_probability": {
+                    "type": "float"
+                }
+            }
         }
     }
 }

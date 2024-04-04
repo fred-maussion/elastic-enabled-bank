@@ -5,13 +5,15 @@
     <div class="row align-items-top">
       <div class="card-body">
           {% if record_count > 0 %}
-            Please confirm that the following will be exported to Elasticsearch:
+            <p class="lead">
+                Please confirm that the following will be exported to Elasticsearch:
+            </p>
             <pre></pre>
             <ul class="list-group">
                 <li class="list-group-item">Number of transactions: {{ record_count }}</li>
             </ul>
             <pre></pre>
-            <h5>Please note that this can take a long time. Don't click twice.</h5>
+            <p class="lead">Please note that this can take a long time. <b>Don't click twice.</b></p>
           {% else %}
             <h5>All records have been imported.</h5>
           {% endif %}

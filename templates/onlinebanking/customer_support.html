@@ -1,13 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}Transactions{% endblock %}
 {% block content %}
-<h2>Customer support</h2>
-<div class="container text-left">
+<h2 class="display-5">How can we help you?</h2>
+<div class="row align-items-top"">
     <form method="post" action="/onlinebanking/customer_support">
         {% csrf_token %}
-        <div>
-            <label for="question" class="col-form-label">Type the question you woud like answered</label>
-        </div>
         <div>
             <input type="text" width="100" placeholder="e.g: What documents do I need in order to apply for a new account" name="question" id="question" required class="form-control">
         </div>
@@ -16,18 +13,22 @@
     </form>
     <pre></pre>
 </div>
-{% if question %}
-    <p>
-        You asked: {{ question }}
-    </p>
-{% endif %}
 {% if answer %}
     <pre></pre>
     <div class="card">
-        <div class="card-body">
-            <p>
-                {{ answer }}
-            </p>
+        <div class="row card-body">
+            <div class="col-4">
+                {% if question %}
+                    <p class="lead">
+                        <em>You asked:</em> "{{ question }}"
+                    </p>
+                {% endif %}
+                <img src="/media/robot.png" alt="Logo" width="100" class="d-inline-block align-text-top">
+            </div>
+            <div class="col-8">
+                {% load markdownify %}
+                {{ answer|markdownify }}
+            </div>
         </div>
     </div>
 {% endif %}

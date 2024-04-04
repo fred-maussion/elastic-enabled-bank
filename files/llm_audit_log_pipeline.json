@@ -1,0 +1,48 @@
+[
+  {
+    "remove": {
+      "field": "ml.inference.response",
+      "ignore_missing": true
+    }
+  },
+  {
+    "inference": {
+      "field_map": {
+        "response": "text_field"
+      },
+      "model_id": "nlptown__bert-base-multilingual-uncased-sentiment",
+      "on_failure": [
+        {
+          "append": {
+            "field": "_source._ingest.inference_errors",
+            "allow_duplicates": false,
+            "value": [
+              {
+                "message": "Processor 'inference' in pipeline 'ml.inference.sentiment' failed for field 'response' with message '{{ _ingest.on_failure_message }}'",
+                "pipeline": "ml.inference.sentiment",
+                "timestamp": "{{{ _ingest.timestamp }}}"
+              }
+            ]
+          }
+        }
+      ],
+      "target_field": "ml.inference.response"
+    }
+  },
+  {
+    "append": {
+      "field": "_source._ingest.processors",
+      "value": [
+        {
+          "model_version": "12.0.0",
+          "pipeline": "ml.inference.sentiment",
+          "processed_timestamp": "{{{ _ingest.timestamp }}}",
+          "types": [
+            "pytorch",
+            "text_classification"
+          ]
+        }
+      ]
+    }
+  }
+]

@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Transactions{% endblock %}
 {% block content %}
-<h2>Your spending trends</h2>
+{% load markdownify %}
+<h2 class="display-5">Your spending trends</h2>
 
 <div class="row align-items-top">
     <div class="col-4">
@@ -24,17 +25,23 @@
         {% if answer %}
             <pre></pre>
             <div class="card">
-                <div class="card-body">
-                    {{ answer|safe }}
+                <div class="row card-body">
+                    <div class="col-3">
+                        <img src="/media/robot.png" alt="Logo" width="100" class="d-inline-block align-text-top">
+                    </div>
+                    <div class="col-9">
+                        {{ answer|markdownify }}
+                    </div>
+
                 </div>
             </div>
         {% endif %}
         {% if offer_summary %}
         <pre></pre>
-         <div class="accordion" id="offer_summary">
+         <div class="accordion rounded shadow-lg" id="offer_summary">
              <div class="accordion-header">
                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSummary" aria-expanded="false" aria-controls="collapseSummary">
-                   Offer score matches
+                   Matching offers
                  </button>
                  <div id="collapseSummary" class="accordion-collapse collapse" data-bs-parent="#offer_summary">
                      <div class="accordion-body">
@@ -50,7 +57,7 @@
         {% endif %}
         {% if transaction_list %}
             <pre></pre>
-             <div class="accordion" id="transaction_list">
+             <div class="accordion rounded shadow-lg" id="transaction_list">
                  <div class="accordion-header">
                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTransactions" aria-expanded="false" aria-controls="collapseTransactions">
                        Supporting transactions

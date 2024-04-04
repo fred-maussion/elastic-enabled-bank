@@ -1,64 +1,48 @@
 {% extends 'base.html' %}
 {% block title %}Transactions{% endblock %}
 {% block content %}
-<h2>Natural language search</h2>
+<h2 class="display-5">Natural language search</h2>
 
-<div class="container text-left">
+<div class="row align-items-top">
     <form method="post" action="/onlinebanking/search">
         {% csrf_token %}
         <div>
-            <label for="question" class="col-form-label">Type the general category of transactions you would like to see</label>
-        </div>
-        <div>
-            <input type="text" width="100" placeholder="e.g: Clothing and shoes" name="question" id="question" required class="form-control">
+            <input type="text" width="100" placeholder="e.g: Household expenses" name="question" id="question" required class="form-control">
         </div>
         <pre></pre>
         <button type="submit" class="btn btn-primary">Submit</button>
     </form>
     <pre></pre>
 </div>
-{% if summary %}
-    <div class="card">
-        <div class="card-body">
-            {{ summary|safe }}
-        </div>
+
+{% if results %}
+    <pre></pre>
+    <div class="container text-left">
+        <p>
+            <h3>Search results for "{{ question }}"</h3>
+        </p>
+        <table class="head fs-6 fw-light">
+            <thead>
+                <th scope="col" width="10%">Date</th>
+                <th scope="col" width="20%">Account</th>
+                <th scope="col">Description</th>
+                <th scope="col" width="10%">Value</th>
+                <th scope="col" width="10%">Opening balance</th>
+                <th scope="col" width="10%">Closing balance</th>
+            </thead>
+            <tbody class="table-hover align-top">
+                {% for r in results %}
+                <tr>
+                    <td>{{ r.transaction_date }}</td>
+                    <td>{{ r.bank_account_number }}</td>
+                    <td>{{ r.description }}</td>
+                    <td>{{ r.transaction_value }}</td>
+                    <td>{{ r.opening_balance }}</td>
+                    <td>{{ r.closing_balance }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-{% else %}
-    {% if results %}
-        <pre></pre>
-        <div class="container text-left">
-            <p>
-                <h3>Search results for "{{ question }}"</h3>
-                <form method="post" action="/onlinebanking/search">
-                   {% csrf_token %}
-                    <input type="hidden" name="question" value="{{ question }}">
-                    <input type="hidden" name="summarise" value="true">
-                    <button type="submit" class="btn btn-primary">Summarise my results</button>
-                </form>
-            </p>
-            <table class="head fs-6 fw-light">
-                <thead>
-                    <th scope="col" width="10%">Date</th>
-                    <th scope="col" width="20%">Account</th>
-                    <th scope="col">Description</th>
-                    <th scope="col" width="10%">Value</th>
-                    <th scope="col" width="10%">Opening balance</th>
-                    <th scope="col" width="10%">Closing balance</th>
-                </thead>
-                <tbody class="table-hover align-top">
-                    {% for r in results %}
-                    <tr>
-                        <td>{{ r.transaction_date }}</td>
-                        <td>{{ r.bank_account_number }}</td>
-                        <td>{{ r.description }}</td>
-                        <td>{{ r.transaction_value }}</td>
-                        <td>{{ r.opening_balance }}</td>
-                        <td>{{ r.closing_balance }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% endif %}
 {% endif %}
 {% endblock %}

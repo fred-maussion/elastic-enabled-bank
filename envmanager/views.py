@@ -13,6 +13,7 @@ customer_id = getattr(settings, 'DEMO_USER_ID', None)
 index_name = getattr(settings, 'TRANSACTION_INDEX_NAME', None)
 product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
 llm_audit_index_name = getattr(settings, 'LLM_AUDIT_LOG_INDEX', None)
+llm_audit_log_pipeline_name = getattr(settings, 'LLM_AUDIT_LOG_INDEX_PIPELINE_NAME', None)
 pipeline_name = getattr(settings, 'TRANSACTION_PIPELINE_NAME', None)
 elastic_cloud_id = getattr(settings, 'elastic_cloud_id', None)
 elastic_user = getattr(settings, 'elastic_user', None)
@@ -126,10 +127,6 @@ def cluster(request):
         http_auth=(elastic_user, elastic_password)
     )
     context = {
-        'cloud_id': elastic_cloud_id,
-        'elastic_user': elastic_user,
-        'elastic_password': elastic_password,
-        'kibana_url': kibana_url,
         'es': es.info,
         'ping': es.ping
 
@@ -265,16 +262,15 @@ def index_setup(request):
         product_index_settings = read_json_file(f'files/product_index_settings.json')
         llm_audit_index_mapping = read_json_file(f'files/llm_audit_log_mapping.json')
         pipeline_processors = read_json_file(f'files/transaction_index_pipeline.json')
+        llm_audit_log_pipeline = read_json_file(f'files/llm_audit_log_pipeline.json')
 
         # destroy indices
         index_exists = es.indices.exists(index=index_name)
         if index_exists:
             es.indices.delete(index=index_name)
-
         product_index_exists = es.indices.exists(index=product_index_name)
         if product_index_exists:
             es.indices.delete(index=product_index_name)
-
         llm_index_exists = es.indices.exists(index=llm_audit_index_name)
         if llm_index_exists:
             es.indices.delete(index=llm_audit_index_name)
@@ -284,8 +280,14 @@ def index_setup(request):
         if pipeline_exists:
             es.ingest.delete_pipeline(id=pipeline_name)
 
+        log_pipeline_exists = es.ingest.get_pipeline(id=llm_audit_log_pipeline_name, ignore=[404])
+        if pipeline_exists:
+            es.ingest.delete_pipeline(id=llm_audit_log_pipeline_name)
+
+
         # rebuild it all
         es.ingest.put_pipeline(id=pipeline_name, processors=pipeline_processors)
+        es.ingest.put_pipeline(id=llm_audit_log_pipeline_name, processors=llm_audit_log_pipeline)
         es.indices.create(index=index_name, mappings=transaction_index_mapping, settings=transaction_index_settings)
         es.indices.create(index=product_index_name, mappings=product_index_mapping, settings=product_index_settings)
         es.indices.create(index=llm_audit_index_name, mappings=llm_audit_index_mapping)
@@ -299,17 +301,20 @@ def index_setup(request):
         product_index_exists = es.indices.exists(index=product_index_name)
         llm_index_exists = es.indices.exists(index=llm_audit_index_name)
         pipeline_exists = es.ingest.get_pipeline(id=pipeline_name, ignore=[404])
-        if index_exists and pipeline_exists and product_index_exists and llm_index_exists:
+        llm_pipeline_exists = es.ingest.get_pipeline(id=llm_audit_log_pipeline_name, ignore=[404])
+        if index_exists and pipeline_exists and product_index_exists and llm_index_exists and llm_pipeline_exists:
             transaction_mapping = es.indices.get_mapping(index=index_name)
             product_mapping = es.indices.get_mapping(index=product_index_name)
             ll_audit_mapping = es.indices.get_mapping(index=llm_audit_index_name)
             pipeline = es.ingest.get_pipeline(id=pipeline_name)
+            llm_audit_log_pipeline = es.ingest.get_pipeline(id=llm_audit_log_pipeline_name)
             context = {
                 'view_name': 'confirmation',
                 'transaction_mapping': transaction_mapping,
                 'product_mapping': product_mapping,
                 'llm_audit_mapping': ll_audit_mapping,
-                'pipeline': pipeline
+                'pipeline': pipeline,
+                'llm_audit_log_pipeline': llm_audit_log_pipeline
             }
         elif ((product_index_exists and index_exists) and not pipeline_exists) or (
                 pipeline_exists and not (index_exists and product_index_exists)):
