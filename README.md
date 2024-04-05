@@ -2,20 +2,11 @@
 The idea behind this repo is to provide an easy way to demonstrate how Elastic can improve both customer facing and 
 internal bank visibility and analytics through the implementation of data de-normalization, semantic search and generative AI.
 
-### Ideally you need to have experience with Python. 
-#### This project has been designed to run locally on your own computer, connecting to an Elastic Cloud cluster, and an Azure OpenAI endpoint.
+Begin by downloading this repo to your local machine or host.
 
-### Prerequisites
-You must have Python 3.10 or above installed locally on the system you intend to run this demo on. 
-In addition, please review the contents of the env.example file in this repo and ensure you have the necessary details to populate the template.
-Certain credentials will be generated as you build the application. 
+Irrespective of how you deploy the python app, you will need an Elasticsearch cluster setup and running.
 
-Specifically:
-
-- DJANGO_SECRET_KEY - this gets created when you build your django project
-All other details in the .env file will need to be obtained prior to the setup of this project.
-
-Elastic cluster specification:
+### Elasticsearch config: 
 
 Your cluster will need: 
 - 8GB RAM hot nodes
@@ -36,9 +27,42 @@ You will need to upload this into your cluster following the ELAND library steps
 https://eland.readthedocs.io/en/latest/
 ````
 
+### For the python app, you have two options in terms of proceeding, please choose your flavour: 
+
+## Run as-is using Docker:
+- Navigate to the root folder of the downloaded repo.
+- using the file env.example as a template, construct your .env file with all of the necessary credentials required to run the demo.
+- Note that the DJANGO_SECRET will be created at build time by the Dockerfile.
+
+- Build the container image:
+````
+sudo docker build -t <your_chosen_image_name> .
+````
+Next, run the container and bind it to a port on the host:
+````
+docker run -d -p 8080:8000 <your_chosen_image_name>
+````
+
+Your host should now serve the demo on port 8080.
+
+You can skip the next section and go straight to "Configuring the Elastic Enabled Bank" section below.
+
+## Set up locally on your environment:
+### Ideally you need to have experience with Python. 
+#### This project has been designed to run locally on your own computer, connecting to an Elastic Cloud cluster, and an Azure OpenAI endpoint.
+
+### Prerequisites
+You must have Python 3.10 or above installed locally on the system you intend to run this demo on. 
+In addition, please review the contents of the env.example file in this repo and ensure you have the necessary details to populate the template.
+Certain credentials will be generated as you build the application. 
+
+Specifically:
+
+- DJANGO_SECRET_KEY - this gets created when you build your django project
+All other details in the .env file will need to be obtained prior to the setup of this project.
+
 ### Installation
 To begin: 
-- download this repo
 - navigate to the project root in terminal 
 - create a new virtual environment.
 

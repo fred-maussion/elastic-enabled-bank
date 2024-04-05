@@ -238,8 +238,6 @@ def customer_support(request):
         customer_support_field_list = ['title', 'body_content', '_score']
         customer_support_results = es.search(index=customer_support_index, query=query, size=50,
                                              fields=customer_support_field_list, min_score=10)
-        # response_data = [{"_score": hit["_score"], **hit["_source"]} for hit in
-        #                  customer_support_results["hits"]["hits"]]
         documents = []
         # Check if there are hits
         if customer_support_results['hits']['total']['value'] > 1:
