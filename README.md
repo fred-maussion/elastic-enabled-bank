@@ -6,7 +6,7 @@ internal bank visibility and analytics through the implementation of data de-nor
 #### This project has been designed to run locally on your own computer, connecting to an Elastic Cloud cluster, and an Azure OpenAI endpoint.
 
 ### Prerequisites
-You must have Python 3.8 or above installed locally on the system you intend to run this demo on. 
+You must have Python 3.10 or above installed locally on the system you intend to run this demo on. 
 In addition, please review the contents of the env.example file in this repo and ensure you have the necessary details to populate the template.
 Certain credentials will be generated as you build the application. 
 
