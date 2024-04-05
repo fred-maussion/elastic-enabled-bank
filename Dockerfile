@@ -13,6 +13,21 @@ COPY . /app/
 
 # Create and activate a virtual environment
 RUN python3 -m venv /opt/venv
+# Use an official Python runtime as a parent image
+FROM python:3.10
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app/
+
+# Create and activate a virtual environment
+RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN /opt/venv/bin/python -m pip install --upgrade pip
 
@@ -27,8 +42,11 @@ RUN cp example-config/settings.py config/settings.py
 # Replace the Django secret key in .env
 RUN sed -i "s/your_secret_key_here/$(grep -oP "SECRET_KEY = '\K[^']+" config/settings.py)/" .env
 
+# Install Gunicorn
+RUN pip install gunicorn
+
 # Expose port 8000 to the outside world
 EXPOSE 8000
 
-# Run the web server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run Gunicorn to serve Django application
+CMD gunicorn --bind 0.0.0.0:8000 config.wsgi:application
