@@ -2,6 +2,8 @@
 The idea behind this repo is to provide an easy way to demonstrate how Elastic can improve both customer facing and 
 internal bank visibility and analytics through the implementation of data de-normalization, semantic search and generative AI.
 
+#### This project has been designed to connect to an Elastic Cloud cluster, and an Azure OpenAI endpoint. You have the option of running it locally for development or as a container to save time.
+
 Begin by downloading this repo to your local machine or host.
 
 Irrespective of how you deploy the python app, you will need an Elasticsearch cluster setup and running.
@@ -27,8 +29,6 @@ You will need to upload this into your cluster following the ELAND library steps
 https://eland.readthedocs.io/en/latest/
 ````
 
-### For the python app, you have two options in terms of proceeding, please choose your flavour: 
-
 ## Run as-is using Docker:
 - Navigate to the root folder of the downloaded repo.
 - using the file env.example as a template, construct your .env file with all of the necessary credentials required to run the demo.
@@ -40,7 +40,7 @@ sudo docker build -t <your_chosen_image_name> .
 ````
 Next, run the container and bind it to a port on the host:
 ````
-docker run -d -p 8080:8000 <your_chosen_image_name>
+sudo docker run -d -p 8080:8000 <your_chosen_image_name>
 ````
 
 Your host should now serve the demo on port 8080.
@@ -49,7 +49,6 @@ You can skip the next section and go straight to "Configuring the Elastic Enable
 
 ## Set up locally on your environment:
 ### Ideally you need to have experience with Python. 
-#### This project has been designed to run locally on your own computer, connecting to an Elastic Cloud cluster, and an Azure OpenAI endpoint.
 
 ### Prerequisites
 You must have Python 3.10 or above installed locally on the system you intend to run this demo on. 
