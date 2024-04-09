@@ -73,13 +73,21 @@ def demo_scenarios(request, action=None, demo_scenario_id=None):
 def banking_products(request, action=None, banking_product_id=None):
     if request.method == 'POST':
         id_to_update = request.POST.get('bank_offer_id')
-        product_to_edit = BankingProducts.objects.get(id=id_to_update)
-        product_to_edit.product_name = request.POST.get('product_name')
-        product_to_edit.description = request.POST.get('description')
-        product_to_edit.generator_keywords = request.POST.get('generator_keywords')
-        product_to_edit.account_type_id = request.POST.get('account_type')
-        product_to_edit.exported = 0
-        product_to_edit.save()
+        if id_to_update:
+            product_to_edit = BankingProducts.objects.get(id=id_to_update)
+            product_to_edit.product_name = request.POST.get('product_name')
+            product_to_edit.description = request.POST.get('description')
+            product_to_edit.generator_keywords = request.POST.get('generator_keywords')
+            product_to_edit.account_type_id = request.POST.get('account_type')
+            product_to_edit.exported = 0
+            product_to_edit.save()
+        else:
+            BankingProducts.objects.create(
+                product_name = request.POST.get('product_name'),
+                description = request.POST.get('product_name'),
+                generator_keywords = request.POST.get('generator_keywords'),
+                account_type_id = request.POST.get('account_type')
+            )
         return redirect('banking_products')
     account_types = BankAccountType.objects.all()
     product_to_edit = []
