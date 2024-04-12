@@ -84,7 +84,7 @@ def banking_products(request, action=None, banking_product_id=None):
         else:
             BankingProducts.objects.create(
                 product_name = request.POST.get('product_name'),
-                description = request.POST.get('product_name'),
+                description = request.POST.get('description'),
                 generator_keywords = request.POST.get('generator_keywords'),
                 account_type_id = request.POST.get('account_type')
             )

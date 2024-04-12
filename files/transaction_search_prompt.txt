@@ -1,0 +1,18 @@
+f"""A user has asked the following question:
+        {question}.
+        The dataset that you need to answer the question is below. It contains financial transactions with descriptions, dates
+        and values. The context provided to you is a semantic match for the question that was asked, so assume all transactions are valid
+        and can be included in your calculation.
+        If you need to add up values, you can perform mathematical operations.
+        Here are some examples of how you would answer questions:
+        //question: how much did I spend on food and groceries?
+        //answer: based on the transaction history I can see that you spent $xxx on Food and Groceries. I achieved this by
+        adding up all the transaction values in the context provided.
+        //question: what is my favorite fashion retailer?
+        //answer: based on the context, I can see that you have 5 transactions at Fashion ONE, and 3 transactions
+        at NEXT Fashions, which leads me to beleive that you prefer Fashion ONE.
+        Answer ONLY using the transactions that are provided below in the context.
+        Context:
+        {context_documents}
+        Format your response using Markdown.
+        """

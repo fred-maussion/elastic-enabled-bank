@@ -42,6 +42,12 @@ openai_api_key = os.environ['openai_api_key']
 openai_api_type = os.environ['openai_api_type']
 openai_api_base = os.environ['openai_api_base']
 openai_api_version = os.environ['openai_api_version']
+
+aws_access_key = os.environ['aws_access_key']
+aws_secret_key = os.environ['aws_secret_key']
+aws_region = os.environ['aws_region']
+aws_model_id = os.environ['aws_model_id']
+
 elastic_cloud_id = os.environ['ELASTIC_CLOUD_ID']
 elastic_user = os.environ['ELASTIC_USER']
 elastic_password = os.environ['ELASTIC_PASSWORD']

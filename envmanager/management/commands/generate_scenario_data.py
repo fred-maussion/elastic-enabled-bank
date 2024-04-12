@@ -178,7 +178,7 @@ class Command(BaseCommand):
                 max_transaction_value = 500
                 transaction_value = random.randint(min_transaction_value, max_transaction_value)
                 keyword_list = banking_product.generator_keywords.split(',')
-                transaction_type = random.choice('EFT', 'Purchase')
+                transaction_type = random.choice(['EFT', 'Purchase'])
                 if transaction_type == 'EFT':
                     generate_outbound_payment(bank_account, random_transaction_date, transaction_value, keyword_list)
                 elif transaction_type == 'Purchase':
