@@ -474,32 +474,32 @@ def search(request):
                     doc_data = {field: hit[field] for field in field_list if field in hit}
                     transaction_results.append(doc_data)
 
-            context_documents = str(transaction_results[:100])
-            context_documents = truncate_text(context_documents, 12000)
-            prompt_file = 'files/transaction_search_prompt.txt'
-            with open(prompt_file, "r") as file:
-                prompt_contents_template = file.read()
-                prompt = prompt_contents_template.format(question=question, context_documents=context_documents)
-                augmented_prompt = prompt
-
-            messages = [
-                SystemMessage(
-                    content="You are a helpful customer support agent."),
-                HumanMessage(content=augmented_prompt)
-            ]
-            sent_time = datetime.now(tz=timezone.utc)
-            chat_model = init_chat_model('azure')
-            answer = chat_model(messages).content
-            received_time = datetime.now(tz=timezone.utc)
-            log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
-                                'customer support')
+            # context_documents = str(transaction_results[:100])
+            # context_documents = truncate_text(context_documents, 12000)
+            # prompt_file = 'files/transaction_search_prompt.txt'
+            # with open(prompt_file, "r") as file:
+            #     prompt_contents_template = file.read()
+            #     prompt = prompt_contents_template.format(question=question, context_documents=context_documents)
+            #     augmented_prompt = prompt
+            #
+            # messages = [
+            #     SystemMessage(
+            #         content="You are a helpful customer support agent."),
+            #     HumanMessage(content=augmented_prompt)
+            # ]
+            # sent_time = datetime.now(tz=timezone.utc)
+            # chat_model = init_chat_model('azure')
+            # answer = chat_model(messages).content
+            # received_time = datetime.now(tz=timezone.utc)
+            # log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
+            #                     'transaction advice')
     else:
         answer = []
         transaction_results = []
     context = {
         'question': question,
         'results': transaction_results,
-        'answer': answer
+        # 'answer': answer
     }
     return render(request, "onlinebanking/search.html", context)
 
