@@ -4,27 +4,62 @@
 {% load markdownify %}
 
 <h2 class="display-5">Natural language search</h2>
-
 <div class="row align-items-top">
-    <form method="post" action="/onlinebanking/search">
-        {% csrf_token %}
-        <div>
-            <input type="text" width="100" placeholder="e.g: Household expenses" name="question" id="question" required class="form-control">
-        </div>
-        <pre></pre>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+<form method="post" action="/onlinebanking/search">
+    {% csrf_token %}
+    <div>
+        <input type="text" width="100" placeholder="Filter your transactions using natural language like: 'household expenses'" name="search_term" id="search_term" required class="form-control">
+    </div>
     <pre></pre>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+<pre></pre>
 </div>
-{% if answer %}
-    {{ answer|markdownify }}
-{% endif %}
+
 {% if results %}
-    <pre></pre>
+    <div class="row align-items-top">
+        <div class="col-5">
+            <p>
+                You searched your transaction history for <strong>"{{ search_term }}"</strong>
+                Ask our financial assistant agent any question about these transactions:
+            </p>
+        </div>
+        <div class="col-5">
+            <div class="row align-items-top">
+                <form method="post" action="/onlinebanking/search">
+                    {% csrf_token %}
+                    <div>
+                        <input type="text" placeholder="Ask your question here" name="question" id="question" required class="form-control">
+                        <input type="hidden" name="search_term" value="{{ search_term }}">
+                    </div>
+                    <pre></pre>
+                    <button type="submit" class="btn btn-primary">Ask the agent</button>
+                </form>
+                <pre></pre>
+            </div>
+        </div>
+    </div>
+    {% if answer %}
+        <pre></pre>
+        <div class="card">
+            <div class="row card-body">
+                <div class="col-3">
+                    {% if question %}
+                        <p class="lead">
+                            <em>You asked:</em> "{{ question }}"
+                        </p>
+                    {% endif %}
+                    <img src="/media/robot.png" alt="Logo" width="100" class="d-inline-block align-text-top">
+                </div>
+                <div class="col-9">
+                    {{ answer|markdownify }}
+                </div>
+
+            </div>
+        </div>
+    {% endif %}
+<pre></pre>
     <div class="container text-left">
-        <p>
-            <h3>Search results for "{{ question }}"</h3>
-        </p>
         <table class="head fs-6 fw-light">
             <thead>
                 <th scope="col" width="10%">Date</th>

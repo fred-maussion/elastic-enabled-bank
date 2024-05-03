@@ -42,7 +42,7 @@ customer_support_index = getattr(settings, 'CUSTOMER_SUPPORT_INDEX', None)
 logging_index = getattr(settings, 'LLM_AUDIT_LOG_INDEX', None)
 logging_pipeline = getattr(settings, 'LLM_AUDIT_LOG_INDEX_PIPELINE_NAME', None)
 llm_provider = getattr(settings, 'LLM_PROVIDER', None)
-llm_temperature = 1
+llm_temperature = 0
 
 # calculate the cost of an LLM interaction
 def calculate_cost(message, type):
@@ -423,9 +423,12 @@ def financial_analysis(request):
 
 
 def search(request):
+    search_term = ""
+    answer = ""
+    prompt_construct = ""
     question = ""
     if request.method == 'POST':
-        question = request.POST.get('question')
+        search_term = request.POST.get('search_term')
         demo_user = Customer.objects.filter(id=customer_id).first()
         # handle the es connection for the map and conversational search components
         es = Elasticsearch(
@@ -440,14 +443,14 @@ def search(request):
                         "text_expansion": {
                             "ml.inference.description_expanded.predicted_value": {
                                 "model_id": model_id,
-                                "model_text": question,
+                                "model_text": search_term,
                                 "boost": 10
                             }
                         }
                     },
                     {
                         "match": {
-                            "description": question
+                            "description": search_term
                         }
                     }
                 ],
@@ -461,7 +464,7 @@ def search(request):
 
         field_list = ["transaction_date", "description", "transaction_value",
                       "transaction_category", "bank_account_number", "opening_balance", "closing_balance", "_score"]
-        results = es.search(index=index_name, query=query, size=100, min_score=1)
+        results = es.search(index=index_name, query=query, size=20, min_score=1)
         print(results)
         response_data = [{"_score": hit["_score"], **hit["_source"]} for hit in results["hits"]["hits"]]
         transaction_results = []
@@ -473,33 +476,56 @@ def search(request):
                 for hit in response_data:
                     doc_data = {field: hit[field] for field in field_list if field in hit}
                     transaction_results.append(doc_data)
+            question = request.POST.get('question')
+            if question:
+                context_documents = str(transaction_results[:20])
+                context_documents = truncate_text(context_documents, 10000)
 
-            # context_documents = str(transaction_results[:100])
-            # context_documents = truncate_text(context_documents, 12000)
-            # prompt_file = 'files/transaction_search_prompt.txt'
-            # with open(prompt_file, "r") as file:
-            #     prompt_contents_template = file.read()
-            #     prompt = prompt_contents_template.format(question=question, context_documents=context_documents)
-            #     augmented_prompt = prompt
-            #
-            # messages = [
-            #     SystemMessage(
-            #         content="You are a helpful customer support agent."),
-            #     HumanMessage(content=augmented_prompt)
-            # ]
-            # sent_time = datetime.now(tz=timezone.utc)
-            # chat_model = init_chat_model('azure')
-            # answer = chat_model(messages).content
-            # received_time = datetime.now(tz=timezone.utc)
-            # log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
-            #                     'transaction advice')
+                # Phase 1
+                prompt_file = 'files/auto_generate_prompt.txt'
+                with open(prompt_file, "r") as file:
+                    prompt_contents_template = file.read()
+                    prompt = prompt_contents_template.format(question=question, context_documents=context_documents)
+                    augmented_prompt = prompt
+                messages = [
+                    SystemMessage(
+                        content="You are a helpful prompt engineer."),
+                    HumanMessage(content=augmented_prompt)
+                ]
+                sent_time = datetime.now(tz=timezone.utc)
+                chat_model = init_chat_model(llm_provider)
+                prompt_construct = chat_model(messages).content
+                received_time = datetime.now(tz=timezone.utc)
+                log_llm_interaction(augmented_prompt, prompt_construct, sent_time, received_time, 'original', llm_provider, model_id,
+                                    'transaction advice')
+
+                # Phase 2
+                prompt_file = 'files/transaction_search_prompt.txt'
+                with open(prompt_file, "r") as file:
+                    prompt_contents_template = file.read()
+                    prompt = prompt_contents_template.format(question=question, context_documents=context_documents, reflection=prompt_construct)
+                    augmented_prompt = prompt
+                messages = [
+                    SystemMessage(
+                        content="You are a helpful prompt engineer."),
+                    HumanMessage(content=augmented_prompt)
+                ]
+                sent_time = datetime.now(tz=timezone.utc)
+                chat_model = init_chat_model(llm_provider)
+                answer = chat_model(messages).content
+                received_time = datetime.now(tz=timezone.utc)
+                log_llm_interaction(augmented_prompt, prompt_construct, sent_time, received_time, 'original', llm_provider, model_id,
+                                    'transaction advice')
     else:
         answer = []
         transaction_results = []
+
     context = {
-        'question': question,
+        'search_term': search_term,
         'results': transaction_results,
-        # 'answer': answer
+        'reflection': prompt_construct,
+        'answer': answer,
+        'question': question
     }
     return render(request, "onlinebanking/search.html", context)
 
