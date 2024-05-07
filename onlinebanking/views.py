@@ -94,7 +94,6 @@ def log_llm_interaction(prompt, response, sent_time, received_time, answer_type,
 
 
 def init_chat_model(provider):
-    provider = 'azure'
     if provider == 'azure':
         BASE_URL = os.environ['openai_api_base']
         API_KEY = os.environ['openai_api_key']
@@ -111,7 +110,7 @@ def init_chat_model(provider):
         bedrock_client = boto3.client(service_name="bedrock-runtime", region_name=os.environ['aws_region'],
                                       aws_access_key_id=os.environ['aws_access_key'],
                                       aws_secret_access_key=os.environ['aws_secret_key'])
-        llm = BedrockChat(
+        chat_model = BedrockChat(
             client=bedrock_client,
             model_id=os.environ['aws_model_id'],
             streaming=True,
@@ -273,7 +272,7 @@ def customer_support(request):
             HumanMessage(content=augmented_prompt)
         ]
         sent_time = datetime.now(tz=timezone.utc)
-        chat_model = init_chat_model('azure')
+        chat_model = init_chat_model(llm_provider)
         answer = chat_model(messages).content
         received_time = datetime.now(tz=timezone.utc)
         log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id, 'customer support')
@@ -400,7 +399,7 @@ def financial_analysis(request):
                         HumanMessage(content=augmented_prompt)
                     ]
                     sent_time = datetime.now(tz=timezone.utc)
-                    chat_model = init_chat_model('azure')
+                    chat_model = init_chat_model(llm_provider)
                     answer = chat_model(messages).content
                     received_time = datetime.now(tz=timezone.utc)
                     log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
