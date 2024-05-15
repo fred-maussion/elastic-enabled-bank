@@ -39,9 +39,6 @@ RUN django-admin startproject config .
 RUN cp example-config/urls.py config/urls.py
 RUN cp example-config/settings.py config/settings.py
 
-# Replace the Django secret key in .env
-RUN sed -i "s/your_secret_key_here/$(grep -oP "SECRET_KEY = '\K[^']+" config/settings.py)/" .env
-
 # Install Gunicorn
 RUN pip install gunicorn
 
