@@ -67,13 +67,15 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'public',
-    'onlinebanking',
+    'elasticapm.contrib.django',
     'envmanager',
     'markdownify.apps.MarkdownifyConfig',
+    'onlinebanking',
+    'public',
+
 ]
 
 MIDDLEWARE = [
@@ -115,6 +117,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+}
+
+ELASTIC_APM = {
+   'SERVICE_NAME': 'elastic-enabled-bank',
 }
 
 
