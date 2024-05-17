@@ -12,7 +12,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from urllib.parse import urlparse
+
+import environ
+
 load_dotenv()
+env = environ.Env()
 
 # Specify the demo user that all views will filter on
 DEMO_USER_ID = 1
@@ -29,30 +34,31 @@ LLM_PROVIDER = 'azure'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+DB_DIR = Path(os.getenv('DB_DIR', str(BASE_DIR)))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
-GOOGLE_MAPS_API_KEY = os.environ['GOOGLE_MAPS_API_KEY']
-TRANSFORMER_MODEL = os.environ['TRANSFORMER_MODEL']
-openai_api_key = os.environ['openai_api_key']
-openai_api_type = os.environ['openai_api_type']
-openai_api_base = os.environ['openai_api_base']
-openai_api_version = os.environ['openai_api_version']
+SECRET_KEY = env('DJANGO_SECRET_KEY',default=None)
+GOOGLE_MAPS_API_KEY = env('GOOGLE_MAPS_API_KEY',default=None)
+TRANSFORMER_MODEL = env('TRANSFORMER_MODEL',default=None)
+openai_api_key = env('openai_api_key',default=None)
+openai_api_type = env('openai_api_type',default=None)
+openai_api_base = env('openai_api_base',default=None)
+openai_api_version = env('openai_api_version',default=None)
 
-aws_access_key = os.environ['aws_access_key']
-aws_secret_key = os.environ['aws_secret_key']
-aws_region = os.environ['aws_region']
-aws_model_id = os.environ['aws_model_id']
+aws_access_key = env('aws_access_key',default=None)
+aws_secret_key = env('aws_secret_key',default=None)
+aws_region = env('aws_region',default=None)
+aws_model_id = env('aws_model_id',default=None)
 
-elastic_cloud_id = os.environ['ELASTIC_CLOUD_ID']
-elastic_user = os.environ['ELASTIC_USER']
-elastic_password = os.environ['ELASTIC_PASSWORD']
-elastic_api_key = os.environ['ELASTIC_API_KEY']
-kibana_url = os.environ['KIBANA_URL']
+elastic_cloud_id = env('ELASTIC_CLOUD_ID',default=None)
+elastic_user = env('ELASTIC_USER',default=None)
+elastic_password = env('ELASTIC_PASSWORD',default=None)
+elastic_api_key = env('ELASTIC_API_KEY',default=None)
+kibana_url = env('KIBANA_URL',default=None)
 
 
 # SECURITY WARNING: don't run with debug turned on in production!§
@@ -79,6 +85,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'elasticapm.contrib.django.middleware.TracingMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -113,16 +120,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': env.db()
 }
 
 ELASTIC_APM = {
-   'SERVICE_NAME': 'elastic-enabled-bank',
+    'SERVICE_NAME': 'elastic-enabled-bank',
+    'DJANGO_TRANSACTION_NAME_FROM_ROUTE': True,
+    'DEBUG': True,
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -170,3 +175,42 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    'handlers': {
+        'elasticapm': {
+            'level': 'INFO',
+            'class': 'elasticapm.contrib.django.handlers.LoggingHandler',
+        },
+        'console': {
+            'level': 'WARNING',
+            'class': 'logging.StreamHandler'
+        }
+    },
+    'loggers': {
+        'elasticapm': {
+            'level': 'WARNING',
+            'handlers': ['console']
+        },
+    },
+}
+
+# SECURITY WARNING: It's recommended that you use this when
+# running in production. The URL will be known once you first deploy
+# to Cloud Run. This code takes the URL and converts it to both these settings formats.
+CLOUDRUN_SERVICE_URL = env("CLOUDRUN_SERVICE_URL", default=None)
+if CLOUDRUN_SERVICE_URL:
+    ALLOWED_HOSTS = [urlparse(CLOUDRUN_SERVICE_URL).netloc]
+    CSRF_TRUSTED_ORIGINS = [CLOUDRUN_SERVICE_URL]
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+else:
+    ALLOWED_HOSTS = ["*"]
+
+# If the flag as been set, configure to use proxy
+if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
+    DATABASES["default"]["HOST"] = "127.0.0.1"
+    DATABASES["default"]["PORT"] = 5432
