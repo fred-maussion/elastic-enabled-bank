@@ -30,11 +30,8 @@ RUN cp example-config/settings.py config/settings.py
 # Replace the Django secret key in .env
 #RUN sed -i "s/your_secret_key_here/$(grep -oP "SECRET_KEY = '\K[^']+" config/settings.py)/" .env
 
-# Install Gunicorn
-RUN pip install gunicorn
-
 # Expose port 8000 to the outside world
 EXPOSE 8000
 
 # Run Gunicorn to serve Django application
-CMD gunicorn --bind 0.0.0.0:8000 config.wsgi:application
+CMD gunicorn --bind 0.0.0.0:8000 --worker-class=gevent --worker-connections=50 --workers=3 config.wsgi:application
