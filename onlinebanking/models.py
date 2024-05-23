@@ -37,7 +37,7 @@ class BankAccountType(models.Model):
 
 class BankAccount(models.Model):
     account_type = models.ForeignKey(BankAccountType, on_delete=models.CASCADE, null=False)
-    account_number = models.CharField(max_length=21, verbose_name='Bank account number')
+    account_number = models.CharField(max_length=32, verbose_name='Bank account number')
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
     exported = models.BooleanField(default=False)
 

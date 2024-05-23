@@ -44,7 +44,7 @@ DB_DIR = Path(os.getenv('DB_DIR', str(BASE_DIR)))
 SECRET_KEY = env('DJANGO_SECRET_KEY',default=None)
 GOOGLE_MAPS_API_KEY = env('GOOGLE_MAPS_API_KEY',default=None)
 TRANSFORMER_MODEL = env('TRANSFORMER_MODEL',default=None)
-openai_api_key = env('openai_api_key',default=None)
+openai_api_key = env('openai_api_key',default='')
 openai_api_type = env('openai_api_type',default=None)
 openai_api_base = env('openai_api_base',default=None)
 openai_api_version = env('openai_api_version',default=None)
@@ -203,7 +203,7 @@ LOGGING = {
 # to Cloud Run. This code takes the URL and converts it to both these settings formats.
 CLOUDRUN_SERVICE_URL = env("CLOUDRUN_SERVICE_URL", default=None)
 if CLOUDRUN_SERVICE_URL:
-    ALLOWED_HOSTS = [urlparse(CLOUDRUN_SERVICE_URL).netloc]
+    ALLOWED_HOSTS = [urlparse(CLOUDRUN_SERVICE_URL).netloc , '127.0.0.1']
     CSRF_TRUSTED_ORIGINS = [CLOUDRUN_SERVICE_URL]
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
