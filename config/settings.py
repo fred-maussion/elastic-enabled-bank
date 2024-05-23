@@ -11,39 +11,37 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 from urllib.parse import urlparse
-
 import environ
+from django.core.management.utils import get_random_secret_key
 
-load_dotenv()
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 env = environ.Env()
 
 # Specify the demo user that all views will filter on
 DEMO_USER_ID = 1
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
-TRANSACTION_INDEX_NAME = 'search-bank-project-transactions_v1'
-TRANSACTION_PIPELINE_NAME = 'ml-inference-search-bank-project-transactions_v1'
-MODEL_ID = '.elser_model_2_linux-x86_64'
-PRODUCT_INDEX = 'banking-products'
-PRODUCT_INDEX_PIPELINE_NAME = 'ml-inference-search-bank-project-transactions_v1'
-CUSTOMER_SUPPORT_INDEX = 'search-customer-support'
-LLM_AUDIT_LOG_INDEX = 'llm-audit-log'
-LLM_AUDIT_LOG_INDEX_PIPELINE_NAME = 'ml-inference-sentiment'
-LLM_PROVIDER = 'azure'
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-DB_DIR = Path(os.getenv('DB_DIR', str(BASE_DIR)))
+# Django secret key specific settings
+SECRET_KEY = env('DJANGO_SECRET_KEY',default=get_random_secret_key())
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('DJANGO_SECRET_KEY',default=None)
+# Application specific settings
 GOOGLE_MAPS_API_KEY = env('GOOGLE_MAPS_API_KEY',default=None)
-TRANSFORMER_MODEL = env('TRANSFORMER_MODEL',default=None)
+TRANSACTION_INDEX_NAME = env('TRANSACTION_INDEX_NAME',default='search-bank-project-transactions_v1')
+TRANSACTION_PIPELINE_NAME = env('TRANSACTION_PIPELINE_NAME',default='ml-inference-search-bank-project-transactions_v1')
+MODEL_ID = env('TRANSFORMER_MODEL',default='.elser_model_2_linux-x86_64')
+TRANSFORMER_MODEL = MODEL_ID
+PRODUCT_INDEX = env('PRODUC_INDEX',default='banking-products')
+PRODUCT_INDEX_PIPELINE_NAME = env('PRODUCT_INDEX_PIPELINE_NAME',default='ml-inference-search-bank-project-transactions_v1')
+CUSTOMER_SUPPORT_INDEX = env('CUSTOMER_SUPPORT_INDEX',default='search-customer-support')
+LLM_AUDIT_LOG_INDEX = env('LLM_AUDIT_LOG_INDEX',default='llm-audit-log')
+LLM_AUDIT_LOG_INDEX_PIPELINE_NAME = env('LLM_AUDIT_LOG_INDEX_PIPELINE_NAME',default='ml-inference-sentiment')
+LLM_PROVIDER = env('LLM_PROVIDER',default='azure')
 openai_api_key = env('openai_api_key',default='')
 openai_api_type = env('openai_api_type',default=None)
 openai_api_base = env('openai_api_base',default=None)
@@ -60,15 +58,7 @@ elastic_password = env('ELASTIC_PASSWORD',default=None)
 elastic_api_key = env('ELASTIC_API_KEY',default=None)
 kibana_url = env('KIBANA_URL',default=None)
 
-
-# SECURITY WARNING: don't run with debug turned on in production!§
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
-
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -76,12 +66,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'elasticapm.contrib.django',
     'envmanager',
     'markdownify.apps.MarkdownifyConfig',
     'onlinebanking',
     'public',
-
 ]
 
 MIDDLEWARE = [
@@ -152,17 +140,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-
 STATIC_URL = 'static/'
 
 # Base url to serve media files
@@ -173,7 +157,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
@@ -207,8 +190,10 @@ if CLOUDRUN_SERVICE_URL:
     CSRF_TRUSTED_ORIGINS = [CLOUDRUN_SERVICE_URL]
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    DEBUG = False
 else:
     ALLOWED_HOSTS = ["*"]
+    DEBUG = True
 
 # If the flag as been set, configure to use proxy
 if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
