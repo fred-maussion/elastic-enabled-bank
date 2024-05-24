@@ -1,49 +1,35 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10
+FROM cgr.dev/chainguard/python:latest-dev as builder
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Set the working directory in the container
-WORKDIR /app
-
-# Copy the current directory contents into the container at /app
-COPY . /app/
+# setup the environment
+ENV LANG=C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/eeb/venv/bin:$PATH"
 
 # Create and activate a virtual environment
-RUN python3 -m venv /opt/venv
-# Use an official Python runtime as a parent image
-FROM python:3.10
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Set the working directory in the container
-WORKDIR /app
-
-# Copy the current directory contents into the container at /app
-COPY . /app/
-
-# Create and activate a virtual environment
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN /opt/venv/bin/python -m pip install --upgrade pip
+WORKDIR /eeb
+RUN python -m venv /eeb/venv
 
 # Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Create Django project and copy necessary files
-RUN django-admin startproject config .
-RUN cp example-config/urls.py config/urls.py
-RUN cp example-config/settings.py config/settings.py
+# production image
+FROM cgr.dev/chainguard/python:latest
+WORKDIR /app
 
-# Install Gunicorn
-RUN pip install gunicorn
+COPY . ./
+COPY --from=builder /eeb/venv /venv
 
 # Expose port 8000 to the outside world
 EXPOSE 8000
 
+# setup the environment
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/venv/bin:$PATH"
+
+VOLUME /data
+
 # Run Gunicorn to serve Django application
-CMD gunicorn --bind 0.0.0.0:8000 config.wsgi:application
+ENTRYPOINT [ "/venv/bin/python3" ]
+CMD ["-m", "gunicorn", "-b", "0.0.0.0:8000", "--worker-class=gevent", "--worker-connections=50", "--workers=3", "config.wsgi:application" ]
