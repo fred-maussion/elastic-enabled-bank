@@ -38,7 +38,8 @@ openai_api_version = os.environ['openai_api_version']
 model_id = getattr(settings, 'MODEL_ID', None)
 pipeline_name = getattr(settings, 'TRANSACTION_PIPELINE_NAME', None)
 product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
-customer_support_index = getattr(settings, 'CUSTOMER_SUPPORT_INDEX', None)
+customer_support_base_index = getattr(settings, 'CUSTOMER_SUPPORT_INDEX', None)
+customer_support_index = f'{customer_support_base_index}_processed'
 logging_index = getattr(settings, 'LLM_AUDIT_LOG_INDEX', None)
 logging_pipeline = getattr(settings, 'LLM_AUDIT_LOG_INDEX_PIPELINE_NAME', None)
 llm_provider = getattr(settings, 'LLM_PROVIDER', None)
@@ -219,7 +220,7 @@ def customer_support(request):
                             "ml.inference.title_expanded.predicted_value": {
                                 "model_id": model_id,
                                 "model_text": question,
-                                "boost": 5
+                                "boost": 2
                             }
                         }
                     },
@@ -245,8 +246,8 @@ def customer_support(request):
             }
         }
         customer_support_field_list = ['title', 'body_content', '_score']
-        customer_support_results = es.search(index=customer_support_index, query=query, size=50,
-                                             fields=customer_support_field_list, min_score=10)
+        customer_support_results = es.search(index=customer_support_index, query=query, size=20,
+                                             fields=customer_support_field_list, min_score=20)
         documents = []
         # Check if there are hits
         if customer_support_results['hits']['total']['value'] > 1:
@@ -258,7 +259,7 @@ def customer_support(request):
                 }
                 documents.append(doc_info)
 
-        context_documents = str(documents[:3])
+        context_documents = str(documents[:15])
         context_documents = truncate_text(context_documents, 12000)
         prompt_file = 'files/customer_support_prompt.txt'
         with open(prompt_file, "r") as file:
@@ -285,6 +286,7 @@ def customer_support(request):
 
 
 def financial_analysis(request):
+    demo_user = Customer.objects.filter(id=customer_id).first()
     # search elastic for user transactions and aggregate them by category
     es = Elasticsearch(
         cloud_id=elastic_cloud_id,
@@ -294,9 +296,7 @@ def financial_analysis(request):
         "size": 0,
         "query": {
             "term": {
-                "customer_name.keyword": {
-                    "value": "Moe Money"
-                }
+                "customer_email.keyword": demo_user.email
             }
         },
         "aggs": {
@@ -330,49 +330,88 @@ def financial_analysis(request):
     }
 
     if request.method == 'POST':
+        offer_summary_dict = []
         transaction_info_list = []
+        answer = "There are currently no offers in the system. Please check back soon."
         if request.POST.get('interested'):
             # get current banking product offers
             all_offers = BankingProducts.objects.all()
             demo_user = Customer.objects.filter(id=customer_id).first()
             for offer in all_offers:
-                offer_query = {
-                    "bool": {
-                        "should": [
-                            {
-                                "text_expansion": {
-                                    "ml.inference.description_expanded.predicted_value": {
-                                        "model_id": model_id,
-                                        "model_text": offer.description,
-                                        "boost": 1
+                new_offer_query = {
+                        "rrf": {
+                            "retrievers": [
+                                {
+                                    "standard": {
+                                        "filter": {
+                                            "term": {
+                                                "customer_email.keyword": demo_user.email
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "standard": {
+                                        "query": {
+                                            "term": {
+                                                "description": offer.description
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "standard": {
+                                        "query": {
+                                            "text_expansion": {
+                                                "ml.inference.description_expanded.predicted_value": {
+                                                    "model_id": model_id,
+                                                    "model_text": offer.description
+                                                }
+                                            }
+                                        }
                                     }
                                 }
-                            },
-                            {
-                                "match": {
-                                    "description": {
-                                        "query": offer.description,
-                                        "boost": 1
-                                    }
-
-                                }
-                            }
-                        ],
-                        "filter": {
-                            "term": {
-                                "customer_email.keyword": demo_user.email
-                            }
+                            ],
+                            "window_size": 20,
+                            "rank_constant": 1
                         }
                     }
-                }
+
+                # offer_query = {
+                #     "bool": {
+                #         "should": [
+                #             {
+                #                 "text_expansion": {
+                #                     "ml.inference.description_expanded.predicted_value": {
+                #                         "model_id": model_id,
+                #                         "model_text": offer.description,
+                #                     }
+                #                 }
+                #             },
+                #             {
+                #                 "match": {
+                #                     "description": {
+                #                         "query": offer.description,
+                #                         "boost": 2
+                #                     }
+                #
+                #                 }
+                #             }
+                #         ],
+                #         "filter": {
+                #             "term": {
+                #                 "customer_email.keyword": demo_user.email
+                #             }
+                #         }
+                #     }
+                # }
                 offer_field_list = ["transaction_date", "description", "transaction_value", "transaction_category",
                                     "retail_category"]
-                matching_transactions = es.search(index=index_name, query=offer_query, min_score=10,
+                matching_transactions = es.search(index=index_name, retriever=new_offer_query,
                                                   fields=offer_field_list)
                 if matching_transactions['hits']['total']['value'] > 1:
                     for hit in matching_transactions['hits']['hits']:
                         transaction_info = {
-                            "score": hit["_score"],
                             "offer_name": offer.product_name,
                             "offer_description": offer.description,
                             "transaction_description": hit["_source"]["description"],
@@ -381,7 +420,7 @@ def financial_analysis(request):
                         transaction_info_list.append(transaction_info)
                     transaction_df = pd.DataFrame(transaction_info_list)
                     offer_summary = transaction_df.groupby('offer_name').agg(
-                        {'purchase_value': 'sum', 'score': 'sum', 'offer_description': 'first'}).reset_index()
+                        {'offer_description': 'first'}).reset_index()
                     offer_summary_dict = offer_summary.to_dict(orient='records')
                     demo_scenario_details = DemoScenarios.objects.get(active=True)
                     demo_scenario_dict = {
@@ -405,16 +444,13 @@ def financial_analysis(request):
                     log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
                                         'product offer')
                 else:
-                    offer_summary_dict = []
                     answer = "Your financial needs are currently perfectly met by your existing suite of products. Well done!"
         else:
-            offer_summary_dict = []
             answer = "You have chosen not to review your financial products."
 
         context = {
             "transaction_list": transaction_info_list,
             'categories': categories,
-            'offer_summary': offer_summary_dict,
             'answer': answer
         }
 
@@ -481,28 +517,28 @@ def search(request):
                 context_documents = truncate_text(context_documents, 10000)
 
                 # Phase 1
-                prompt_file = 'files/auto_generate_prompt.txt'
-                with open(prompt_file, "r") as file:
-                    prompt_contents_template = file.read()
-                    prompt = prompt_contents_template.format(question=question, context_documents=context_documents)
-                    augmented_prompt = prompt
-                messages = [
-                    SystemMessage(
-                        content="You are a helpful prompt engineer."),
-                    HumanMessage(content=augmented_prompt)
-                ]
-                sent_time = datetime.now(tz=timezone.utc)
-                chat_model = init_chat_model(llm_provider)
-                prompt_construct = chat_model(messages).content
-                received_time = datetime.now(tz=timezone.utc)
-                log_llm_interaction(augmented_prompt, prompt_construct, sent_time, received_time, 'original', llm_provider, model_id,
-                                    'transaction advice')
+                # prompt_file = 'files/auto_generate_prompt.txt'
+                # with open(prompt_file, "r") as file:
+                #     prompt_contents_template = file.read()
+                #     prompt = prompt_contents_template.format(question=question, context_documents=context_documents, original_search=search_term)
+                #     augmented_prompt = prompt
+                # messages = [
+                #     SystemMessage(
+                #         content="You are a helpful prompt engineer."),
+                #     HumanMessage(content=augmented_prompt)
+                # ]
+                # sent_time = datetime.now(tz=timezone.utc)
+                # chat_model = init_chat_model(llm_provider)
+                # prompt_construct = chat_model(messages).content
+                # received_time = datetime.now(tz=timezone.utc)
+                # log_llm_interaction(augmented_prompt, prompt_construct, sent_time, received_time, 'original', llm_provider, model_id,
+                #                     'transaction advice')
 
                 # Phase 2
                 prompt_file = 'files/transaction_search_prompt.txt'
                 with open(prompt_file, "r") as file:
                     prompt_contents_template = file.read()
-                    prompt = prompt_contents_template.format(question=question, context_documents=context_documents, reflection=prompt_construct)
+                    prompt = prompt_contents_template.format(question=question, context_documents=context_documents, original_search=search_term)
                     augmented_prompt = prompt
                 messages = [
                     SystemMessage(

@@ -1,0 +1,78 @@
+[
+  {
+    "remove": {
+      "field": "ml.inference.body_content_expanded",
+      "ignore_missing": true
+    }
+  },
+  {
+    "inference": {
+      "field_map": {
+        "body_content": "text_field"
+      },
+      "model_id": ".elser_model_2_linux-x86_64",
+      "target_field": "ml.inference.body_content_expanded",
+      "on_failure": [
+        {
+          "append": {
+            "field": "_source._ingest.inference_errors",
+            "allow_duplicates": false,
+            "value": [
+              {
+                "message": "Processor 'inference' in pipeline 'ml.inference.customer-support' failed for field 'body_content' with message '{{ _ingest.on_failure_message }}'",
+                "pipeline": "ml.inference.customer-support",
+                "timestamp": "{{{ _ingest.timestamp }}}"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "remove": {
+      "field": "ml.inference.title_expanded",
+      "ignore_missing": true
+    }
+  },
+  {
+    "inference": {
+      "field_map": {
+        "title": "text_field"
+      },
+      "model_id": ".elser_model_2_linux-x86_64",
+      "target_field": "ml.inference.title_expanded",
+      "on_failure": [
+        {
+          "append": {
+            "field": "_source._ingest.inference_errors",
+            "allow_duplicates": false,
+            "value": [
+              {
+                "message": "Processor 'inference' in pipeline 'ml.inference.customer-support' failed for field 'title' with message '{{ _ingest.on_failure_message }}'",
+                "pipeline": "ml.inference.customer-support",
+                "timestamp": "{{{ _ingest.timestamp }}}"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "append": {
+      "field": "_source._ingest.processors",
+      "value": [
+        {
+          "model_version": "12.0.0",
+          "pipeline": "ml.inference.customer-support",
+          "processed_timestamp": "{{{ _ingest.timestamp }}}",
+          "types": [
+            "pytorch",
+            "text_expansion"
+          ]
+        }
+      ]
+    }
+  }
+]

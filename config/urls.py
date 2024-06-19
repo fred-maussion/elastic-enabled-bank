@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path
 from public.views import home
 from onlinebanking.views import landing, transactions, search, financial_analysis, customer_support
-from envmanager.views import manager, clear_data, generate_data, process_data_action, execute_backend_command, cluster, export_data, index_setup, demo_scenarios, banking_products
+from envmanager.views import manager, clear_data, generate_data, process_data_action, execute_backend_command, cluster, export_data, index_setup, demo_scenarios, banking_products, knowledge_base
 
 from django.conf.urls.static import static
 from django.conf import settings
@@ -39,6 +39,7 @@ urlpatterns = [
     path('envmanager/cluster', cluster, name='cluster'),
     path('envmanager/export', export_data, name='export'),
     path('envmanager/indices', index_setup, name='index_setup'),
+    path('envmanager/knowledge_base', knowledge_base, name='knowledge_base'),
     path('envmanager/banking_products', banking_products, name='banking_products'),
     path('envmanager/banking_products/<str:action>/<int:banking_product_id>', banking_products, name='banking_products'),
     path('envmanager/demo_scenarios', demo_scenarios, name='demo_scenarios'),

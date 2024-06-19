@@ -1,0 +1,134 @@
+{
+  "properties": {
+    "_ingest": {
+      "properties": {
+        "processors": {
+          "properties": {
+            "model_version": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "pipeline": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "processed_timestamp": {
+              "type": "date"
+            },
+            "types": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "body_content": {
+      "type": "text",
+      "fields": {
+        "delimiter": {
+          "type": "text",
+          "index_options": "freqs",
+          "analyzer": "iq_text_delimiter"
+        },
+        "enum": {
+          "type": "keyword",
+          "ignore_above": 2048
+        },
+        "joined": {
+          "type": "text",
+          "index_options": "freqs",
+          "analyzer": "i_text_bigram",
+          "search_analyzer": "q_text_bigram"
+        },
+        "prefix": {
+          "type": "text",
+          "index_options": "docs",
+          "analyzer": "i_prefix",
+          "search_analyzer": "q_prefix"
+        },
+        "stem": {
+          "type": "text",
+          "analyzer": "iq_text_stem"
+        }
+      },
+      "index_options": "freqs",
+      "analyzer": "iq_text_base"
+    },
+    "title": {
+      "type": "text",
+      "fields": {
+        "delimiter": {
+          "type": "text",
+          "index_options": "freqs",
+          "analyzer": "iq_text_delimiter"
+        },
+        "enum": {
+          "type": "keyword",
+          "ignore_above": 2048
+        },
+        "joined": {
+          "type": "text",
+          "index_options": "freqs",
+          "analyzer": "i_text_bigram",
+          "search_analyzer": "q_text_bigram"
+        },
+        "prefix": {
+          "type": "text",
+          "index_options": "docs",
+          "analyzer": "i_prefix",
+          "search_analyzer": "q_prefix"
+        },
+        "stem": {
+          "type": "text",
+          "analyzer": "iq_text_stem"
+        }
+      },
+      "index_options": "freqs",
+      "analyzer": "iq_text_base"
+    },
+    "ml": {
+      "properties": {
+        "inference": {
+          "properties": {
+            "body_content_expanded": {
+              "properties": {
+                "model_id": {
+                  "type": "keyword"
+                },
+                "predicted_value": {
+                  "type": "rank_features"
+                }
+              }
+            },
+            "title_expanded": {
+              "properties": {
+                "model_id": {
+                  "type": "keyword"
+                },
+                "predicted_value": {
+                  "type": "rank_features"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

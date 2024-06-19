@@ -26,34 +26,17 @@
             <pre></pre>
             <div class="card">
                 <div class="row card-body">
-                    <div class="col-3">
-                        <img src="/media/robot.png" alt="Logo" width="100" class="d-inline-block align-text-top">
+                    <div class="col-2">
+                        <img src="/media/robot.jpg" alt="Logo" width="100" class="d-inline-block align-text-top">
                     </div>
-                    <div class="col-9">
-                        {{ answer|markdownify }}
+                    <div class="col-10">
+                        <div class="speech-bubble">
+                            {{ answer|markdownify }}
+                        </div>
                     </div>
 
                 </div>
             </div>
-        {% endif %}
-        {% if offer_summary %}
-        <pre></pre>
-         <div class="accordion rounded shadow-lg" id="offer_summary">
-             <div class="accordion-header">
-                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSummary" aria-expanded="false" aria-controls="collapseSummary">
-                   Matching offers
-                 </button>
-                 <div id="collapseSummary" class="accordion-collapse collapse" data-bs-parent="#offer_summary">
-                     <div class="accordion-body">
-                        <ul class="list-group">
-                            {% for offer_row in offer_summary %}
-                            <li class="list-group-item">{{ offer_row.offer_name }}:  {{ offer_row.purchase_value }} -- {{ offer_row.score }}</li>
-                            {% endfor %}
-                        </ul>
-                     </div>
-                 </div>
-             </div>
-         </div>
         {% endif %}
         {% if transaction_list %}
             <pre></pre>

@@ -34,11 +34,12 @@ SECRET_KEY = env('DJANGO_SECRET_KEY',default=get_random_secret_key())
 GOOGLE_MAPS_API_KEY = env('GOOGLE_MAPS_API_KEY',default=None)
 TRANSACTION_INDEX_NAME = env('TRANSACTION_INDEX_NAME',default='search-bank-project-transactions_v1')
 TRANSACTION_PIPELINE_NAME = env('TRANSACTION_PIPELINE_NAME',default='ml-inference-search-bank-project-transactions_v1')
+KNOWLEDGE_BASE_PIPELINE_NAME = env('KNOWLEDGE_BASE_PIPELINE_NAME',default='ml-inference-knowledge-base')
 MODEL_ID = env('TRANSFORMER_MODEL',default='.elser_model_2_linux-x86_64')
 TRANSFORMER_MODEL = MODEL_ID
 PRODUCT_INDEX = env('PRODUC_INDEX',default='banking-products')
 PRODUCT_INDEX_PIPELINE_NAME = env('PRODUCT_INDEX_PIPELINE_NAME',default='ml-inference-search-bank-project-transactions_v1')
-CUSTOMER_SUPPORT_INDEX = env('CUSTOMER_SUPPORT_INDEX',default='search-customer-support')
+CUSTOMER_SUPPORT_INDEX = env('KNOWLEDGE_BASE',default='search-customer-support')
 LLM_AUDIT_LOG_INDEX = env('LLM_AUDIT_LOG_INDEX',default='llm-audit-log')
 LLM_AUDIT_LOG_INDEX_PIPELINE_NAME = env('LLM_AUDIT_LOG_INDEX_PIPELINE_NAME',default='ml-inference-sentiment')
 LLM_PROVIDER = env('LLM_PROVIDER',default='azure')
@@ -57,6 +58,7 @@ elastic_user = env('ELASTIC_USER',default=None)
 elastic_password = env('ELASTIC_PASSWORD',default=None)
 elastic_api_key = env('ELASTIC_API_KEY',default=None)
 kibana_url = env('KIBANA_URL',default=None)
+knowledge_base = env('KNOWLEDGE_BASE',default=None)
 
 # Application definition
 INSTALLED_APPS = [
