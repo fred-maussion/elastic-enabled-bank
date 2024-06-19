@@ -1,10 +1,10 @@
 A user has asked the following question:
 {question}
-Do not answer the question. You must create a prompt that an LLM can use in order to answer the question most accurately based
-on the context provided, which is the result of a search within their banking transaction history.
-This is the context:
+Do not answer the question. Your response must be a prompt that will be sent to an LLM in order to answer the question most accurately based
+on a set of transactions that were returned after the user searched with the following search term: {original_search}
+Transaction search results:
 {context_documents}
 The data contains a history of transactions, the account they were made from, their value and a description of the transaction.
 Depending on the request by the user, the LLM may need to do calculations. If this is the case, tell the LLM how to calculate the outcome.
 The LLM cannot use any information that is not contained in the context.
-Instruct the LLM to format its response in markdown.
+

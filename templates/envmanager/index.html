@@ -2,7 +2,33 @@
 {% block title %}Home{% endblock %}
 {% block content %}
 <div class="container text-left">
-    <h3>Using the menu items above, manage your setup here before you run through a demo.</h3>
+    <h3>Using the menu items above, manage your setup before you run through a demo.</h3>
+    <p>
+
+    </p>
+</div>
+
+<div class="container">
+{% if view_name == 'home' %}
+    <h5>Configuration checklist:</h5>
+    <ul class="list-group">
+        <li class="list-group-item">Cluster connection: {% if ping %}Complete{% else %}Incomplete{%endif%}</li>
+        <li class="list-group-item">Index config: {{ index_status }}</li>
+        <li class="list-group-item">Pipeline config: {{ pipeline_status }}</li>
+        <li class="list-group-item">Knowledge base/customer support config: {{ knowledge_base_status }}</li>
+        <li class="list-group-item">LLM config: {{llm_provider}} {{ llm_status }}</li>
+        <li class="list-group-item">{{ bank_account_count }} bank accounts</li>
+        <li class="list-group-item">{{ customer_count }} customers</li>
+        <li class="list-group-item">{{ customer_address_count }} customer addresses</li>
+        <li class="list-group-item">{{ account_transactions_count }} transactions</li>
+        <li class="list-group-item">{{ retailer_count }} retailers</li>
+        <li class="list-group-item">{{ banking_product_count }} banking products</li>
+        <li class="list-group-item">{{ es_record_count }} records in Elasticsearch (this is not always 100% up to date)</li>
+    </ul>
+    <p>
+        <img src="/media/architecture.jpg" width="1024">
+    </p>
+{% endif %}
 </div>
 {% if view_name == 'clear_data' %}
     <div class="container text-left card">

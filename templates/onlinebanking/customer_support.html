@@ -2,7 +2,7 @@
 {% block title %}Transactions{% endblock %}
 {% block content %}
 <h2 class="display-5">How can we help you?</h2>
-<div class="row align-items-top"">
+<div class="row align-items-top">
     <form method="post" action="/onlinebanking/customer_support">
         {% csrf_token %}
         <div>
@@ -17,17 +17,19 @@
     <pre></pre>
     <div class="card">
         <div class="row card-body">
-            <div class="col-4">
+            <div class="col-2">
+                <img src="/media/robot.jpg" alt="Logo" width="100" class="d-inline-block">
+            </div>
+            <div class="col-10">
                 {% if question %}
-                    <p class="lead">
+                    <p>
                         <em>You asked:</em> "{{ question }}"
                     </p>
                 {% endif %}
-                <img src="/media/robot.png" alt="Logo" width="100" class="d-inline-block align-text-top">
-            </div>
-            <div class="col-8">
-                {% load markdownify %}
-                {{ answer|markdownify }}
+                <div class="speech-bubble">
+                    {% load markdownify %}
+                    {{ answer|markdownify }}
+                </div>
             </div>
         </div>
     </div>

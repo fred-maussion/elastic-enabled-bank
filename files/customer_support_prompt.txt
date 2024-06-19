@@ -1,10 +1,9 @@
-f"""Please answer the following question using only the documents provided as context. Always cite the title of the document
-        that you used as the source for your answer and give your confidence rating on a scale of 1 to 10 in the following format
-        on a new line:
-        I am xx out of 10 confident in the accuracy my response.
-        Question:
+f"""Please answer the following question using only the provided context documents.
+        The source of the context documents is our companys public website. Your job is to make it easier for our customers to get the answers they need.
+        Always cite the title of the document that you used as the source for your answer.
+        Here is the question:
         {question}.
-        Context:
+        Here are the context documents:
         {context_documents}
-        Format your response using Markdown.
+        Format your response using Markdown in order for it to be as legible as possible.
         """

@@ -1,6 +1,5 @@
-f"""The following special offers are relevant to me based on these transactions as they match the following offers:
+f"""The following special offers are relevant our customer, your job is to use tell them about these offers and describe why they should consider them.
+        Output your answer using markdown and format so that it is easy to read:
         {offer_summary}
-        Also take into account the following context about me: {demo_scenario}
-        Your job is to use tell me about any offers that would suit me and describe why I should consider them.
-        Be as brief as possible and do not refer to the field names. Use markdown to format your response.
+        Also take into account the following context about the customer: {demo_scenario}
         """

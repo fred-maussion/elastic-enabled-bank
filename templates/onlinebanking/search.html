@@ -24,7 +24,7 @@
                 Ask our financial assistant agent any question about these transactions:
             </p>
         </div>
-        <div class="col-5">
+        <div class="col-7">
             <div class="row align-items-top">
                 <form method="post" action="/onlinebanking/search">
                     {% csrf_token %}
@@ -43,16 +43,18 @@
         <pre></pre>
         <div class="card">
             <div class="row card-body">
-                <div class="col-3">
+                <div class="col-2">
+                    <img src="/media/robot.jpg" alt="Logo" width="100" class="d-inline-block align-text-right">
+                </div>
+                <div class="col-10">
                     {% if question %}
-                        <p class="lead">
+                        <p>
                             <em>You asked:</em> "{{ question }}"
                         </p>
                     {% endif %}
-                    <img src="/media/robot.png" alt="Logo" width="100" class="d-inline-block align-text-top">
-                </div>
-                <div class="col-9">
-                    {{ answer|markdownify }}
+                    <div class="speech-bubble">
+                        {{ answer|markdownify }}
+                    </div>
                 </div>
 
             </div>

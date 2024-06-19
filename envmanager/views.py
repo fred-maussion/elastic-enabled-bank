@@ -6,8 +6,14 @@ from onlinebanking.models import BankAccount, BankAccountType, AccountTransactio
     CustomerAddress, Retailer, DemoScenarios, BankingProducts
 from django.core.management import call_command
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import scan
 import subprocess
 from config import settings
+from langchain_text_splitters import CharacterTextSplitter,TokenTextSplitter
+import uuid
+import os
+import boto3
+from langchain.chat_models import AzureChatOpenAI, BedrockChat
 
 customer_id = getattr(settings, 'DEMO_USER_ID', None)
 index_name = getattr(settings, 'TRANSACTION_INDEX_NAME', None)
@@ -15,15 +21,110 @@ product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
 llm_audit_index_name = getattr(settings, 'LLM_AUDIT_LOG_INDEX', None)
 llm_audit_log_pipeline_name = getattr(settings, 'LLM_AUDIT_LOG_INDEX_PIPELINE_NAME', None)
 pipeline_name = getattr(settings, 'TRANSACTION_PIPELINE_NAME', None)
+kb_pipeline_name = getattr(settings, 'KNOWLEDGE_BASE_PIPELINE_NAME', None)
 elastic_cloud_id = getattr(settings, 'elastic_cloud_id', None)
 elastic_user = getattr(settings, 'elastic_user', None)
 elastic_password = getattr(settings, 'elastic_password', None)
 kibana_url = getattr(settings, 'kibana_url', None)
 
+customer_support_base_index = getattr(settings, 'CUSTOMER_SUPPORT_INDEX', None)
+customer_support_index = f'{customer_support_base_index}_processed'
+llm_provider = getattr(settings, 'LLM_PROVIDER', None)
+llm_temperature = 0
+
+def init_chat_model(provider):
+    if provider == 'azure':
+        BASE_URL = os.environ['openai_api_base']
+        API_KEY = os.environ['openai_api_key']
+        DEPLOYMENT_NAME = os.environ['openai_deployment_name']
+        chat_model = AzureChatOpenAI(
+            openai_api_base=BASE_URL,
+            openai_api_version=os.environ['openai_api_version'],
+            deployment_name=DEPLOYMENT_NAME,
+            openai_api_key=API_KEY,
+            openai_api_type="azure",
+            temperature=llm_temperature
+        )
+    elif provider == 'aws':
+        bedrock_client = boto3.client(service_name="bedrock-runtime", region_name=os.environ['aws_region'],
+                                      aws_access_key_id=os.environ['aws_access_key'],
+                                      aws_secret_access_key=os.environ['aws_secret_key'])
+        chat_model = BedrockChat(
+            client=bedrock_client,
+            model_id=os.environ['aws_model_id'],
+            streaming=True,
+            model_kwargs={"temperature": llm_temperature})
+    return chat_model
+
 
 # Create your views here.
 def manager(request):
-    return render(request, 'envmanager/index.html')
+    es = Elasticsearch(
+        cloud_id=elastic_cloud_id,
+        http_auth=(elastic_user, elastic_password)
+    )
+    index_exists = es.indices.exists(index=index_name)
+    product_index_exists = es.indices.exists(index=product_index_name)
+    llm_index_exists = es.indices.exists(index=llm_audit_index_name)
+
+    customer_support_base_index_exists = es.indices.exists(index=customer_support_base_index)
+    customer_support_index_exists = es.indices.exists(index=customer_support_index)
+
+    if index_exists and product_index_exists and llm_index_exists:
+        indicies = "Complete"
+    else:
+        indicies = "Incomplete"
+
+    if customer_support_base_index_exists and customer_support_index_exists:
+        knowledge_base_status = 'Complete'
+    elif customer_support_base_index_exists and not customer_support_index_exists:
+        knowledge_base_status = 'Please process the base index'
+    else:
+        knowledge_base_status = 'Please set up a base customer support index and specify it in the .env file'
+
+    log_pipeline_exists = es.ingest.get_pipeline(id=llm_audit_log_pipeline_name, ignore=[404])
+    pipeline_exists = es.ingest.get_pipeline(id=pipeline_name, ignore=[404])
+
+    if log_pipeline_exists and pipeline_exists:
+        pipelines = "Complete"
+    else:
+        pipelines = "Incomplete"
+
+    chat_model = init_chat_model(llm_provider)
+    if chat_model:
+        llm_status = 'Connected'
+    else:
+        llm_status = 'Incomplete'
+
+    query = {
+        "match_all": {}
+    }
+    es_record_count = es.count(index=index_name, query=query)
+    bank_account_count = BankAccount.objects.count()
+    customer_count = Customer.objects.exclude(id=customer_id).count()
+    customer_address_count = CustomerAddress.objects.count()
+    account_transactions_count = AccountTransaction.objects.count()
+    retailer_count = Retailer.objects.count()
+    banking_product_count = BankingProducts.objects.count()
+
+    context = {
+        'es': es.info,
+        'ping': es.ping,
+        'view_name': 'home',
+        'index_status': indicies,
+        'pipeline_status': pipelines,
+        'knowledge_base_status': knowledge_base_status,
+        'llm_provider': llm_provider,
+        'llm_status': llm_status,
+        'bank_account_count': bank_account_count,
+        'customer_count': customer_count,
+        'customer_address_count': customer_address_count,
+        'account_transactions_count': account_transactions_count,
+        'retailer_count': retailer_count,
+        'banking_product_count': banking_product_count,
+        'es_record_count': es_record_count['count']
+    }
+    return render(request, 'envmanager/index.html', context=context)
 
 
 def demo_scenarios(request, action=None, demo_scenario_id=None):
@@ -83,10 +184,10 @@ def banking_products(request, action=None, banking_product_id=None):
             product_to_edit.save()
         else:
             BankingProducts.objects.create(
-                product_name = request.POST.get('product_name'),
-                description = request.POST.get('description'),
-                generator_keywords = request.POST.get('generator_keywords'),
-                account_type_id = request.POST.get('account_type')
+                product_name=request.POST.get('product_name'),
+                description=request.POST.get('description'),
+                generator_keywords=request.POST.get('generator_keywords'),
+                account_type_id=request.POST.get('account_type')
             )
         return redirect('banking_products')
     account_types = BankAccountType.objects.all()
@@ -124,7 +225,6 @@ def banking_products(request, action=None, banking_product_id=None):
         'product_to_edit': product_to_edit
     }
     return render(request, 'envmanager/banking_products.html', context=context)
-
 
 
 def cluster(request):
@@ -259,6 +359,65 @@ def export_data(request):
     return render(request, 'envmanager/export.html', context)
 
 
+def knowledge_base(request):
+    es = Elasticsearch(
+        cloud_id=elastic_cloud_id,
+        http_auth=(elastic_user, elastic_password)
+    )
+    processed_kb_index = customer_support_index
+    if request.POST.get('command_name') == 'execute':
+        kb_pipeline_processors = read_json_file(f'files/knowledge_base_pipeline.json')
+        kb_index_mapping = read_json_file(f'files/knowledge_base_mapping.json')
+        kb_index_settings = read_json_file(f'files/knowledge_base_settings.json')
+        # destroy any existing assets
+        index_exists = es.indices.exists(index=processed_kb_index)
+        if index_exists:
+            print("delete index")
+            es.indices.delete(index=processed_kb_index)
+
+        pipeline_exists = es.ingest.get_pipeline(id=kb_pipeline_name, ignore=[404])
+        if pipeline_exists:
+            es.ingest.delete_pipeline(id=kb_pipeline_name)
+
+        # rebuild them
+        es.ingest.put_pipeline(id=kb_pipeline_name, processors=kb_pipeline_processors)
+        es.indices.create(index=processed_kb_index, mappings=kb_index_mapping, settings=kb_index_settings)
+        results = es.search(
+            index=customer_support_base_index,
+            query={"match_all": {}}, size=1000)  # Retrieve the source of the documents
+
+        text_splitter = TokenTextSplitter(chunk_size=600, chunk_overlap=60)
+
+        for hit in results['hits']['hits']:
+            title = hit['_source']['title']
+            body_content = hit['_source']['body_content']
+            passages = text_splitter.split_text(body_content)
+            passage_position = 1
+            for i, chunked_text in enumerate(passages):
+                words = chunked_text.split()
+                total_words = len(words)
+                print(title)
+                print(passage_position)
+                print(chunked_text)
+                print("----------------------------------------------------")
+                if total_words > 0:
+                    doc_id = uuid.uuid4()
+                    doc = {
+                        "body_content": chunked_text,
+                        "title": title,
+                        "passage": passage_position,
+                        "_extract_binary_content": True,
+                        "_reduce_whitespace": True,
+                        "_run_ml_inference": True
+                    }
+                    response = es.index(index=processed_kb_index, id=doc_id, document=doc, pipeline=kb_pipeline_name)
+                passage_position = passage_position + 1
+    context = {
+        'knowledge_base': customer_support_base_index,
+        'processed_kb_index': processed_kb_index,
+    }
+    return render(request, 'envmanager/knowledge_base.html', context)
+
 def index_setup(request):
     es = Elasticsearch(
         cloud_id=elastic_cloud_id,
@@ -291,7 +450,6 @@ def index_setup(request):
         log_pipeline_exists = es.ingest.get_pipeline(id=llm_audit_log_pipeline_name, ignore=[404])
         if pipeline_exists:
             es.ingest.delete_pipeline(id=llm_audit_log_pipeline_name)
-
 
         # rebuild it all
         es.ingest.put_pipeline(id=pipeline_name, processors=pipeline_processors)

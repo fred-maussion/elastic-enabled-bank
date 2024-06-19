@@ -109,7 +109,6 @@ class Command(BaseCommand):
             r.exported = 1
             r.save()
 
-
         while True:
             # Fetch un-exported AccountTransaction records in batches of 100
             account_transactions_to_import = AccountTransaction.objects.filter(exported=0)[:100]

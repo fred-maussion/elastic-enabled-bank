@@ -1,5 +1,0 @@
-f"""I have searched my transaction history for the following phrase: {question}.
-    My search returnedthe following results:
-    {transaction_results}
-    Summarise the results for them.
-                """

@@ -4,6 +4,8 @@ internal bank visibility and analytics through the implementation of data de-nor
 
 #### This project has been designed to connect to an Elastic Cloud cluster, and an Azure OpenAI endpoint. You have the option of running it locally for development or as a container to save time.
 
+![high level architecuture](media/architecture.jpg)
+
 Begin by downloading this repo to your local machine or host.
 
 Irrespective of how you deploy the python app, you will need an Elasticsearch cluster setup and running.
@@ -117,13 +119,10 @@ And hey, look at that, we're running an ***Elastic-enabled bank!***
 
 ### Configuring the Elastic Enabled Bank:
 
-- Start with the Environment Setup, confirm you can connect with your cluster and execute the index and pipeline builds
-- In order for the ***Customer support demo*** to work, you MUST set it up manually as there is no Web Crawler API.
-- This means the pipeline build must be done manually as well because you need to force the crawler to use the inference pipeline.
-There is a secondary reason for this as well: you need to choose the content source for customer support, the only prerequisite for the
-demo to work is that the title and body_content fields need to be expanded using an ELSER model.
-- Next you need to generate new data, and then export that data to the Elastic cluster. I've tried really hard to make those
-forms easy to understand, so I won't explain them here. What is really important is that when you export to Elastic
-just leave the process to run. If you're exporting a really huge dataset and the browser times out, then you can go back and
-use the Export function again - you will not duplicate any records in Elastic as any exported records are flagged and not reimported.
-- The overall demo homepage has demo storylines with click through's, but you can just hit the Online banking portal and run your own storyline if you want to.
+- Start with the Environment Setup, confirm you can connect with your cluster and execute the index and pipeline builds. The homepage of the setup view contains a checklist to confirm the status of your configuration.
+- In order for the ***Customer support demo*** to work, you MUST manually set up a knowledge base as there is no Web Crawler API.
+- This means that if you want to remove any named entity references you need to build your own pipeline to do it. 
+- Once you have ingested data into your customer support knowledge base and correctly referenced it in the .env file, you can perform a reprocessing action from the Environment Setup > Knowledge Base section in order for the contents of your index to be chunked and run through an inference pipeline. This makes your customer support demo ***infinitely*** more effective as the LLM gets really precise context to work from.
+- Next you need to generate new transaction data, and then export that data to the Elastic cluster. The tooling to do so is quite straightforward to understand. NB: When you export to Elastic, just leave the process to run, do not navigate off the page as it cannot run asynchronously. If you're exporting a really huge dataset and the browser times out, then you can go back and
+use the Export function again - you will not duplicate any records in Elastic as any exported records are flagged and not re-imported.
+- The overall demo homepage has storylines with click throughs, but you can just hit the Online banking portal and run your own storyline if you want to.

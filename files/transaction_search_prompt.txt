@@ -1,6 +1,9 @@
 A user has asked the following question:
 {question}
-{reflection}
-You are only allowed to answer using information in the following context:
+Please answer their question based entirely on the search results below, which were generated when the user searched for the following:
+{original_search}
+Transaction search results:
 {context_documents}
-Format your response using Markdown, making important words bold.
+The data contains a history of transactions, the account they were made from, their value and a description of the transaction.
+If the user asks mathematical questions, you can use the value field to perform arithmatic.
+You may not use any information that is not contained in the context.
