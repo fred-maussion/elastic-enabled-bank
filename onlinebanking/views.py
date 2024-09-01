@@ -372,7 +372,7 @@ def financial_analysis(request):
                                     }
                                 }
                             ],
-                            "window_size": 20,
+                            "rank_window_size": 20,
                             "rank_constant": 1
                         }
                     }

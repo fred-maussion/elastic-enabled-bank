@@ -72,6 +72,7 @@
                 <th scope="col" width="10%">Closing balance</th>
             </thead>
             <tbody class="table-hover align-top">
+            {% if results %}
                 {% for r in results %}
                 <tr>
                     <td>{{ r.transaction_date }}</td>
@@ -82,6 +83,9 @@
                     <td>{{ r.closing_balance }}</td>
                 </tr>
                 {% endfor %}
+            {% else %}
+                <p>Your search has produced zero results</p>
+            {% endif %}
             </tbody>
         </table>
     </div>

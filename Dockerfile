@@ -1,4 +1,4 @@
-FROM cgr.dev/chainguard/python:latest-dev as builder
+FROM python:3.10.10 as builder
 
 # setup the environment
 ENV LANG=C.UTF-8
@@ -15,7 +15,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # production image
-FROM cgr.dev/chainguard/python:latest
+FROM python:3.10.10
 WORKDIR /app
 
 COPY . ./
