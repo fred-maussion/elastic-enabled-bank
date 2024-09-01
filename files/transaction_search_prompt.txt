@@ -7,3 +7,4 @@ Transaction search results:
 The data contains a history of transactions, the account they were made from, their value and a description of the transaction.
 If the user asks mathematical questions, you can use the value field to perform arithmatic.
 You may not use any information that is not contained in the context.
+Output your answer using markdown for maximum legibility and ensure that you are as concise as possible.

@@ -63,12 +63,23 @@ def manager(request):
         cloud_id=elastic_cloud_id,
         http_auth=(elastic_user, elastic_password)
     )
-    index_exists = es.indices.exists(index=index_name)
-    product_index_exists = es.indices.exists(index=product_index_name)
-    llm_index_exists = es.indices.exists(index=llm_audit_index_name)
+    index_exists = False
+    product_index_exists = False
+    llm_index_exists = False
+    customer_support_base_index_exists = False
+    customer_support_index_exists = False
 
-    customer_support_base_index_exists = es.indices.exists(index=customer_support_base_index)
-    customer_support_index_exists = es.indices.exists(index=customer_support_index)
+    if es.indices.exists(index=index_name):
+        index_exists = True
+    if es.indices.exists(index=product_index_name):
+        product_index_exists = True
+    if es.indices.exists(index=llm_audit_index_name):
+        llm_index_exists = True
+
+    if es.indices.exists(index=customer_support_base_index):
+        customer_support_base_index_exists = True
+    if es.indices.exists(index=customer_support_index):
+        customer_support_index_exists = True
 
     if index_exists and product_index_exists and llm_index_exists:
         indicies = "Complete"
@@ -99,7 +110,10 @@ def manager(request):
     query = {
         "match_all": {}
     }
-    es_record_count = es.count(index=index_name, query=query)
+    if index_exists:
+        es_record_count = es.count(index=index_name, query=query)
+    else:
+        es_record_count = {'count': 0}
     bank_account_count = BankAccount.objects.count()
     customer_count = Customer.objects.exclude(id=customer_id).count()
     customer_address_count = CustomerAddress.objects.count()

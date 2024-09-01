@@ -16,6 +16,7 @@
     <pre></pre>
 </div>
 <div class="container text-left">
+    {% if transaction_list %}
     <table class="head fs-6 fw-light">
         <thead>
             <th scope="col" width="10%">Date</th>
@@ -26,6 +27,7 @@
             <th scope="col" width="10%">Closing balance</th>
         </thead>
         <tbody class="table-hover align-top">
+
             {% for t in transaction_list %}
             <tr>
                 <td>{{ t.transaction_date|date:"d/m/y" }}</td>
@@ -38,6 +40,10 @@
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+        <h3>Your search has produced zero results</h3>
+        <a href="/onlinebanking/search" class="btn btn-primary">Take me to the Elastic powered search</a>
+
+    {% endif %}
 </div>
-<a href="/onlinebanking/search" class="btn btn-primary">Show me a better experience</a>
 {% endblock %}

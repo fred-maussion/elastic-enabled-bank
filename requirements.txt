@@ -1,3 +1,4 @@
+aiohappyeyeballs==2.4.0
 aiohttp==3.9.1
 aiosignal==1.3.1
 amqp==5.2.0
@@ -9,6 +10,7 @@ asgiref==3.7.2
 async-timeout==4.0.3
 attrs==23.1.0
 background-tasks==0.0.1
+beautifulsoup4==4.12.3
 billiard==4.2.0
 bleach==6.1.0
 boto3==1.34.5
@@ -63,11 +65,11 @@ jsonpointer==2.4
 kibana-api==0.0.4
 kiwisolver==1.4.5
 kombu==5.3.4
-langchain==0.0.352
-langchain-community==0.0.5
-langchain-core==0.2.7
+langchain==0.2.15
+langchain-community==0.2.15
+langchain-core==0.2.37
 langchain-text-splitters==0.2.1
-langsmith==0.1.77
+langsmith==0.1.108
 Markdown==3.6
 MarkupSafe==2.1.5
 marshmallow==3.20.1
@@ -86,6 +88,7 @@ orjson==3.10.5
 packaging==23.2
 pandas==1.5.3
 pillow==10.2.0
+pip-review==1.3.0
 prompt-toolkit==3.0.41
 psycopg2-binary==2.9.9
 pycparser==2.21
@@ -109,6 +112,7 @@ sentence-transformers==2.2.2
 sentencepiece==0.2.0
 six==1.16.0
 sniffio==1.3.0
+soupsieve==2.6
 SQLAlchemy==2.0.23
 sqlparse==0.4.4
 sympy==1.12.1
