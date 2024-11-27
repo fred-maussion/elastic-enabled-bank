@@ -11,6 +11,9 @@ WORKDIR /eeb
 # Create and activate a virtual environment
 RUN python -m venv /eeb/venv
 
+# Upgrade pip to the latest version compatible with Python 3.10
+RUN /eeb/venv/bin/pip install --upgrade pip
+
 # Install dependencies (only requirements.txt)
 COPY requirements.txt .
 RUN /eeb/venv/bin/pip install --no-cache-dir -r requirements.txt

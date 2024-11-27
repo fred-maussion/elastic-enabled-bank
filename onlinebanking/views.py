@@ -377,37 +377,37 @@ def financial_analysis(request):
                         }
                     }
 
-                # offer_query = {
-                #     "bool": {
-                #         "should": [
-                #             {
-                #                 "text_expansion": {
-                #                     "ml.inference.description_expanded.predicted_value": {
-                #                         "model_id": model_id,
-                #                         "model_text": offer.description,
-                #                     }
-                #                 }
-                #             },
-                #             {
-                #                 "match": {
-                #                     "description": {
-                #                         "query": offer.description,
-                #                         "boost": 2
-                #                     }
-                #
-                #                 }
-                #             }
-                #         ],
-                #         "filter": {
-                #             "term": {
-                #                 "customer_email.keyword": demo_user.email
-                #             }
-                #         }
-                #     }
-                # }
+                offer_query = {
+                    "bool": {
+                        "should": [
+                            {
+                                "text_expansion": {
+                                    "ml.inference.description_expanded.predicted_value": {
+                                        "model_id": model_id,
+                                        "model_text": offer.description,
+                                    }
+                                }
+                            },
+                            {
+                                "match": {
+                                    "description": {
+                                        "query": offer.description,
+                                        "boost": 2
+                                    }
+
+                                }
+                            }
+                        ],
+                        "filter": {
+                            "term": {
+                                "customer_email.keyword": demo_user.email
+                            }
+                        }
+                    }
+                }
                 offer_field_list = ["transaction_date", "description", "transaction_value", "transaction_category",
                                     "retail_category"]
-                matching_transactions = es.search(index=index_name, retriever=new_offer_query,
+                matching_transactions = es.search(index=index_name, query=offer_query,
                                                   fields=offer_field_list)
                 if matching_transactions['hits']['total']['value'] > 1:
                     for hit in matching_transactions['hits']['hits']:
@@ -463,7 +463,8 @@ def search(request):
     prompt_construct = ""
     question = ""
     if request.method == 'POST':
-        search_term = request.POST.get('search_term')
+        search_term = request.POST.get('question')
+        print(search_term)
         demo_user = Customer.objects.filter(id=customer_id).first()
         # handle the es connection for the map and conversational search components
         es = Elasticsearch(
