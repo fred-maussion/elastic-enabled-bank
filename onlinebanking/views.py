@@ -463,7 +463,9 @@ def search(request):
     prompt_construct = ""
     question = ""
     if request.method == 'POST':
-        search_term = request.POST.get('question')
+        search_term = request.POST.get('search_term')
+        if search_term is None:
+            search_term = request.POST.get('question')
         print(search_term)
         demo_user = Customer.objects.filter(id=customer_id).first()
         # handle the es connection for the map and conversational search components
