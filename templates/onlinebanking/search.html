@@ -3,12 +3,12 @@
 {% block content %}
 {% load markdownify %}
 
-<h2 class="display-5">Natural language search</h2>
+<h2 class="display-5">Transaction search</h2>
 <div class="row align-items-top">
 <form method="post" action="/onlinebanking/search">
     {% csrf_token %}
     <div>
-        <input type="text" width="100" placeholder="Filter your transactions using natural language like: 'household expenses'" name="search_term" id="search_term" required class="form-control">
+        <input type="text" width="100" placeholder="Filter your transactions using natural language like: 'household expenses'" name="search_term" id="search_term" required class="form-control shadow">
     </div>
     <pre></pre>
     <button type="submit" class="btn btn-primary">Search</button>
@@ -18,24 +18,31 @@
 
 {% if results %}
     <div class="row align-items-top">
-        <div class="col-5">
-            <p>
-                You searched your transaction history for <strong>"{{ search_term }}"</strong>
-                Ask our financial assistant agent any question about these transactions:
-            </p>
-        </div>
-        <div class="col-7">
-            <div class="row align-items-top">
-                <form method="post" action="/onlinebanking/search">
-                    {% csrf_token %}
-                    <div>
-                        <input type="text" placeholder="Ask your question here" name="question" id="question" required class="form-control">
-                        <input type="hidden" name="search_term" value="{{ search_term }}">
+        <div class="accordion shadow" id="ask_the_agent">
+            <div class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResults" aria-expanded="false" aria-controls="collapseResults">
+                    Ask the agent
+                </button>
+                <div id="collapseResults" class="accordion-collapse collapse" data-bs-parent="#ask_the_agent">
+                    <div class="accordion-body">
+                        <p>
+                            You searched your transaction history for <strong>"{{ search_term }}"</strong>
+                            Ask our financial assistant agent any question about these transactions:
+                        </p>
+                      <form method="post" action="/onlinebanking/search">
+                            {% csrf_token %}
+                            <div>
+                                <input type="text" placeholder="Ask your question here" name="question" id="question" required class="form-control">
+                                <input type="hidden" name="search_term" value="{{ search_term }}">
+                            </div>
+                            <pre></pre>
+                            <button type="submit" class="btn btn-primary">Ask the agent</button>
+                        </form>
+                        <pre></pre>
                     </div>
-                    <pre></pre>
-                    <button type="submit" class="btn btn-primary">Ask the agent</button>
-                </form>
-                <pre></pre>
+                </div>
+
+
             </div>
         </div>
     </div>
@@ -44,7 +51,7 @@
         <div class="card">
             <div class="row card-body">
                 <div class="col-2">
-                    <img src="/media/robot.jpg" alt="Logo" width="100" class="d-inline-block align-text-right">
+                    <img src="/media/banksy.jpg" alt="Logo" width="150" class="d-inline-block align-text-right">
                 </div>
                 <div class="col-10">
                     {% if question %}
@@ -65,10 +72,10 @@
         <table class="head fs-6 fw-light">
             <thead>
                 <th scope="col" width="10%">Date</th>
-                <th scope="col" width="20%">Account</th>
+    <!--            <th scope="col" width="20%">Account</th>-->
                 <th scope="col">Description</th>
                 <th scope="col" width="10%">Value</th>
-                <th scope="col" width="10%">Opening balance</th>
+    <!--            <th scope="col" width="10%">Opening balance</th>-->
                 <th scope="col" width="10%">Closing balance</th>
             </thead>
             <tbody class="table-hover align-top">
@@ -76,11 +83,14 @@
                 {% for r in results %}
                 <tr>
                     <td>{{ r.transaction_date }}</td>
-                    <td>{{ r.bank_account_number }}</td>
+<!--                    <td>{{ r.bank_account_number }}</td>-->
                     <td>{{ r.description }}</td>
                     <td>{{ r.transaction_value }}</td>
-                    <td>{{ r.opening_balance }}</td>
+<!--                    <td>{{ r.opening_balance }}</td>-->
                     <td>{{ r.closing_balance }}</td>
+                </tr>
+                <tr>
+                    <td colspan="4"><hr></td>
                 </tr>
                 {% endfor %}
             {% else %}

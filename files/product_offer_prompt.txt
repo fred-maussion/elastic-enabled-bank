@@ -1,6 +1,6 @@
 f"""The following special offers are relevant our customer, your job is to use tell them about these offers and describe why they should consider them.
         {offer_summary}
         Also take into account the following context about the customer: {demo_scenario}
-        Ensure that you are as concise as possible.
-        Output your answer using markdown for maximum legibility.
+        Ensure that you are as concise as possible, while explaining clearly why the product offer is relevant to the customer.
+        Output your answer using markdown so that you can lay it out in a neat and ordered list with the name of the offer in bold.
         """

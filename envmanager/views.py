@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 import subprocess
 from config import settings
-from langchain_text_splitters import CharacterTextSplitter,TokenTextSplitter
+from langchain_text_splitters import CharacterTextSplitter, TokenTextSplitter
 import uuid
 import os
 import boto3
@@ -31,6 +31,7 @@ customer_support_base_index = getattr(settings, 'CUSTOMER_SUPPORT_INDEX', None)
 customer_support_index = f'{customer_support_base_index}_processed'
 llm_provider = getattr(settings, 'LLM_PROVIDER', None)
 llm_temperature = 0
+
 
 def init_chat_model(provider):
     if provider == 'azure':
@@ -431,6 +432,7 @@ def knowledge_base(request):
         'processed_kb_index': processed_kb_index,
     }
     return render(request, 'envmanager/knowledge_base.html', context)
+
 
 def index_setup(request):
     es = Elasticsearch(

@@ -37,7 +37,7 @@ TRANSACTION_PIPELINE_NAME = env('TRANSACTION_PIPELINE_NAME',default='ml-inferenc
 KNOWLEDGE_BASE_PIPELINE_NAME = env('KNOWLEDGE_BASE_PIPELINE_NAME',default='ml-inference-knowledge-base')
 MODEL_ID = env('TRANSFORMER_MODEL',default='.elser_model_2_linux-x86_64')
 TRANSFORMER_MODEL = MODEL_ID
-PRODUCT_INDEX = env('PRODUC_INDEX',default='banking-products')
+PRODUCT_INDEX = env('PRODUCT_INDEX',default='banking-products')
 PRODUCT_INDEX_PIPELINE_NAME = env('PRODUCT_INDEX_PIPELINE_NAME',default='ml-inference-search-bank-project-transactions_v1')
 CUSTOMER_SUPPORT_INDEX = env('KNOWLEDGE_BASE',default='search-customer-support')
 LLM_AUDIT_LOG_INDEX = env('LLM_AUDIT_LOG_INDEX',default='llm-audit-log')

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Transactions{% endblock %}
 {% block content %}
+<h2 class="display-5">Transactions</h2>
 <div class="container text-left">
     <form method="post" action="/onlinebanking/transactions/{{ bank_account_id }}">
         {% csrf_token %}
@@ -8,10 +9,10 @@
             <label for="keyword" class="col-form-label">Search your transactions:</label>
         </div>
         <div>
-            <input type="text" width="100" placeholder="This search is not enabled by Elastic and reflects the kind of functionality available to customers today." name="keyword" id="keyword" required class="form-control">
+            <input type="text" width="100" placeholder="This search is not enabled by Elastic and reflects the kind of functionality available to customers today." name="keyword" id="keyword" required class="shadow form-control">
         </div>
         <pre></pre>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary shadow">Submit</button>
     </form>
     <pre></pre>
 </div>
@@ -20,10 +21,10 @@
     <table class="head fs-6 fw-light">
         <thead>
             <th scope="col" width="10%">Date</th>
-            <th scope="col" width="20%">Account</th>
+<!--            <th scope="col" width="20%">Account</th>-->
             <th scope="col">Description</th>
             <th scope="col" width="10%">Value</th>
-            <th scope="col" width="10%">Opening balance</th>
+<!--            <th scope="col" width="10%">Opening balance</th>-->
             <th scope="col" width="10%">Closing balance</th>
         </thead>
         <tbody class="table-hover align-top">
@@ -31,11 +32,14 @@
             {% for t in transaction_list %}
             <tr>
                 <td>{{ t.transaction_date|date:"d/m/y" }}</td>
-                <td>{{ t.bank_account }}</td>
+<!--                <td>{{ t.bank_account }}</td>-->
                 <td>{{ t.description }}</td>
                 <td>{{ t.transaction_value }}</td>
-                <td>{{ t.opening_balance }}</td>
+<!--                <td>{{ t.opening_balance }}</td>-->
                 <td>{{ t.closing_balance }}</td>
+            </tr>
+            <tr>
+                <td colspan="4"><hr></td>
             </tr>
             {% endfor %}
         </tbody>

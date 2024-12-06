@@ -111,7 +111,7 @@ def generate_purchase(bank_account, transaction_date, transaction_value, keyword
     address = generate_address()
     city = address['city']
     state = address['state']
-    description = f"Purchase at merchant: {retailer.name}, location: {city},{state}, meta: {keyword}"
+    description = f"Purchase at merchant: {retailer.name}-{keyword}, location: {city},{state}"
 
     AccountTransaction.objects.create(
         bank_account=bank_account,
