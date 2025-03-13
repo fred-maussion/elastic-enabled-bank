@@ -1,13 +1,14 @@
 import json
 import googlemaps
 from django.shortcuts import render
+from django.http import HttpResponse
 from .models import BankAccount, AccountTransaction, Customer, Retailer, BankingProducts, DemoScenarios
 from .forms import AccountTransactionForm, AccountTransferForm
 from elasticsearch import Elasticsearch
 from langchain.chat_models import AzureChatOpenAI, BedrockChat
 from dotenv import load_dotenv
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import tiktoken
 import nltk
 from nltk.tokenize import word_tokenize
@@ -18,6 +19,11 @@ from django.db.models import Q
 import math
 import uuid
 import boto3
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import base64
+from io import BytesIO
 
 load_dotenv()
 
@@ -292,6 +298,7 @@ def financial_analysis(request):
         cloud_id=elastic_cloud_id,
         http_auth=(elastic_user, elastic_password)
     )
+    # Generate category spend
     query = {
         "size": 0,
         "query": {
@@ -318,15 +325,109 @@ def financial_analysis(request):
     results = es.search(index=index_name, body=query, fields=field_list)
 
     categories = []
+    category_names = []
+    total_values = []
     for bucket in results['aggregations']['retail_categories']['buckets']:
         category = {
             'name': bucket['key'],
             'total_value': bucket['total_transaction_value']['value']
         }
         categories.append(category)
+        category_names.append(bucket['key'])
+        total_values.append(bucket['total_transaction_value']['value'])
+
+    # Generate the bar chart
+    plt.style.use('ggplot')
+    plt.figure(figsize=(10, 6))
+    plt.bar(category_names, total_values, color='#0077CC')
+    # plt.title('Retail Categories Total Transaction Value', fontsize=16)
+    # plt.xlabel('Retail Categories', fontsize=14)
+    plt.ylabel('Total Transaction Value', fontsize=14)
+    plt.xticks(rotation=45, ha='right', fontsize=12)
+    plt.tight_layout()
+
+    # Save the plot to a BytesIO buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    plt.close()
+    category_chart_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    # generate the daily spend
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+    daily_query = {
+        "query": {
+            "bool": {
+                "must": {
+                    "range": {
+                        "transaction_date": {
+                            "gte": start_date.isoformat(),
+                            "lte": end_date.isoformat(),
+                            "format": "strict_date_optional_time"
+                        }
+                    }
+                },
+                "filter": {
+                    "term": {
+                        "transaction_type.keyword": "Debit"
+                    }
+                }
+            }
+        },
+        "aggs": {
+            "daily_totals": {
+                "date_histogram": {
+                    "field": "transaction_date",
+                    "calendar_interval": "day"
+                },
+                "aggs": {
+                    "total_spent": {
+                        "sum": {
+                            "field": "transaction_value"
+                        }
+                    }
+                }
+            }
+        },
+        "size": 0  # We only want aggregations
+    }
+
+    daily_results = es.search(index=index_name, body=daily_query)
+
+    # Extract daily totals
+    dates = []
+    daily_totals = []
+    for bucket in daily_results['aggregations']['daily_totals']['buckets']:
+        date_obj = datetime.strptime(bucket['key_as_string'], '%Y-%m-%dT%H:%M:%S.%fZ')  # Parse the date string
+        formatted_date = date_obj.strftime('%a, %d-%m')  # Format as weekday, dd-mm
+        dates.append(formatted_date)
+        daily_totals.append(bucket['total_spent']['value'])
+
+    # Generate the line chart for daily spending totals
+    plt.style.use('ggplot')
+    plt.figure(figsize=(12, 6))
+    plt.plot(dates, daily_totals, marker='o', linestyle='-', color='#0077CC')
+    # plt.title('Total Spent Per Day Over the Last 30 Days', fontsize=16)
+    plt.xlabel('Date (Weekday, dd-mm)', fontsize=14)
+    plt.ylabel('Total Spent', fontsize=14)
+    plt.xticks(rotation=45, ha='right', fontsize=10)
+    plt.grid(True)
+    plt.tight_layout()
+
+    # Save the line chart to a BytesIO buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    plt.close()
+    daily_chart_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
     context = {
-        'categories': categories
+        'categories': categories,
+        'category_chart_image': category_chart_base64,
+        'dates': dates,
+        'daily_totals': daily_totals,
+        'daily_chart_image': daily_chart_base64
     }
 
     if request.method == 'POST':
@@ -449,8 +550,12 @@ def financial_analysis(request):
             answer = "You have chosen not to review your financial products."
 
         context = {
-            "transaction_list": transaction_info_list,
             'categories': categories,
+            'category_chart_image': category_chart_base64,
+            'dates': dates,
+            'daily_totals': daily_totals,
+            'daily_chart_image': daily_chart_base64,
+            "transaction_list": transaction_info_list,
             'answer': answer
         }
 

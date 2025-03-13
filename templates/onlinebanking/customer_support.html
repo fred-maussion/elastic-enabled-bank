@@ -6,7 +6,7 @@
     <form method="post" action="/onlinebanking/customer_support">
         {% csrf_token %}
         <div>
-            <input type="text" width="100" placeholder="e.g: What documents do I need in order to apply for a new account" name="question" id="question" required class="form-control">
+            <input type="text" width="100" placeholder="e.g: What documents do I need in order to apply for a new account" name="question" id="question" required class="form-control shadow">
         </div>
         <pre></pre>
         <button type="submit" class="btn btn-primary">Submit</button>
@@ -15,10 +15,10 @@
 </div>
 {% if answer %}
     <pre></pre>
-    <div class="card">
+    <div class="card shadow">
         <div class="row card-body">
             <div class="col-2">
-                <img src="/media/robot.jpg" alt="Logo" width="100" class="d-inline-block">
+                <img src="/media/banksy.jpg" alt="Logo" width="150" class="d-inline-block">
             </div>
             <div class="col-10">
                 {% if question %}
