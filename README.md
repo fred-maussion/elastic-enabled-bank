@@ -37,12 +37,12 @@ https://eland.readthedocs.io/en/latest/
 
 - Build the container image:
 ````
-docker build -t <your_chosen_image_name> .
+sudo docker build -t <your_chosen_image_name> .
 ````
 
 Next, run the container to bind on port 8000:
 ````
-docker run --env-file .env -d --name elastic-bank -p 8000:8000 <your_chosen_image_name>
+sudo docker run --env-file .env -d --name elastic-bank -p 8000:8000 <your_chosen_image_name>
 ````
 
 Your host should now serve the demo on port 8000.
