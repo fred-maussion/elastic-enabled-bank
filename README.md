@@ -39,10 +39,6 @@ https://eland.readthedocs.io/en/latest/
 ````
 docker build -t <your_chosen_image_name> .
 ````
-Next, run the container to run the migrations:
-````
-docker run --env-file .env -it --rm <your_chosen_image_name> manage.py migrate
-````
 
 Next, run the container to bind on port 8000:
 ````

@@ -3,4 +3,5 @@ f"""The following special offers are relevant our customer, your job is to use t
         Also take into account the following context about the customer: {demo_scenario}
         Ensure that you are as concise as possible, while explaining clearly why the product offer is relevant to the customer.
         Output your answer using markdown so that you can lay it out in a neat and ordered list with the name of the offer in bold.
+        Be sure to mention where the user lives to enhance the relevance of the offer.
         """
