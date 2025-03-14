@@ -1,5 +1,5 @@
 # Builder stage
-FROM python:3.10.10 as builder
+FROM python:3.10.10 AS builder
 
 # Set environment variables
 ENV LANG=C.UTF-8
