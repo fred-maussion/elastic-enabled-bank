@@ -25,12 +25,12 @@ jobs:
 
       - name: Build and Tag Docker Image
         run: |
-          IMAGE_PATH=ghcr.io/${{ github.repository_owner }}/fred-maussion/elastic-enabled-bank
+          IMAGE_PATH=ghcr.io/${{ github.repository_owner }}/elastic-enabled-bank
           docker build -t $IMAGE_PATH:latest .
           echo "Built image: $IMAGE_PATH:latest"
 
       - name: Push Docker Image
         run: |
-          IMAGE_PATH=ghcr.io/${{ github.repository_owner }}/fred-maussion/elastic-enabled-bank
+          IMAGE_PATH=ghcr.io/${{ github.repository_owner }}/elastic-enabled-bank
           docker push $IMAGE_PATH:latest
           echo "Pushed image: $IMAGE_PATH:latest"
