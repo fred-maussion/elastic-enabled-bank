@@ -278,7 +278,7 @@ def customer_support(request):
         ]
         sent_time = datetime.now(tz=timezone.utc)
         chat_model = init_chat_model(llm_provider)
-        answer = chat_model(messages).content
+        answer = chat_model.invoke(messages).content
         received_time = datetime.now(tz=timezone.utc)
         log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id, 'customer support')
     context = {
