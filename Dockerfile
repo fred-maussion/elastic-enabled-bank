@@ -1,5 +1,5 @@
 # Builder stage
-FROM python:3.10.10 AS builder
+FROM python:3.11 AS builder
 
 # Set environment variables
 ENV LANG=C.UTF-8
@@ -19,7 +19,7 @@ COPY requirements.txt .
 RUN /eeb/venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # Production image
-FROM python:3.10.10
+FROM python:3.11
 
 # Set up the working directory
 WORKDIR /app
