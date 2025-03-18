@@ -13,7 +13,8 @@ from langchain_text_splitters import CharacterTextSplitter, TokenTextSplitter
 import uuid
 import os
 import boto3
-from langchain.chat_models import AzureChatOpenAI, BedrockChat
+from langchain_community.chat_models import BedrockChat
+from langchain_openai import AzureChatOpenAI
 
 customer_id = getattr(settings, 'DEMO_USER_ID', None)
 index_name = getattr(settings, 'TRANSACTION_INDEX_NAME', None)
@@ -35,15 +36,11 @@ llm_temperature = 0
 
 def init_chat_model(provider):
     if provider == 'azure':
-        BASE_URL = os.environ['openai_api_base']
-        API_KEY = os.environ['openai_api_key']
-        DEPLOYMENT_NAME = os.environ['openai_deployment_name']
         chat_model = AzureChatOpenAI(
-            openai_api_base=BASE_URL,
-            openai_api_version=os.environ['openai_api_version'],
-            deployment_name=DEPLOYMENT_NAME,
-            openai_api_key=API_KEY,
-            openai_api_type="azure",
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+            openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+            deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT"],
+            openai_api_key=os.environ["AZURE_OPENAI_KEY"],
             temperature=llm_temperature
         )
     elif provider == 'aws':

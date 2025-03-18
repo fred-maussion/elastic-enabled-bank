@@ -5,7 +5,8 @@ from django.http import HttpResponse
 from .models import BankAccount, AccountTransaction, Customer, Retailer, BankingProducts, DemoScenarios
 from .forms import AccountTransactionForm, AccountTransferForm
 from elasticsearch import Elasticsearch
-from langchain.chat_models import AzureChatOpenAI, BedrockChat
+from langchain_community.chat_models import BedrockChat
+from langchain_openai import AzureChatOpenAI
 from dotenv import load_dotenv
 import os
 from datetime import datetime, timezone, timedelta
@@ -37,10 +38,10 @@ index_name = getattr(settings, 'TRANSACTION_INDEX_NAME', None)
 elastic_cloud_id = getattr(settings, 'elastic_cloud_id', None)
 elastic_user = getattr(settings, 'elastic_user', None)
 elastic_password = getattr(settings, 'elastic_password', None)
-openai_api_key = os.environ['openai_api_key']
-openai_api_type = os.environ['openai_api_type']
-openai_api_base = os.environ['openai_api_base']
-openai_api_version = os.environ['openai_api_version']
+# openai_api_key = os.environ['openai_api_key']
+# openai_api_type = os.environ['openai_api_type']
+# openai_api_base = os.environ['openai_api_base']
+# openai_api_version = os.environ['openai_api_version']
 model_id = getattr(settings, 'MODEL_ID', None)
 pipeline_name = getattr(settings, 'TRANSACTION_PIPELINE_NAME', None)
 product_index_name = getattr(settings, 'PRODUCT_INDEX', None)
@@ -102,15 +103,11 @@ def log_llm_interaction(prompt, response, sent_time, received_time, answer_type,
 
 def init_chat_model(provider):
     if provider == 'azure':
-        BASE_URL = os.environ['openai_api_base']
-        API_KEY = os.environ['openai_api_key']
-        DEPLOYMENT_NAME = os.environ['openai_deployment_name']
         chat_model = AzureChatOpenAI(
-            openai_api_base=BASE_URL,
-            openai_api_version=os.environ['openai_api_version'],
-            deployment_name=DEPLOYMENT_NAME,
-            openai_api_key=API_KEY,
-            openai_api_type="azure",
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+            openai_api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+            deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT"],
+            openai_api_key=os.environ["AZURE_OPENAI_KEY"],
             temperature=llm_temperature
         )
     elif provider == 'aws':
@@ -148,6 +145,7 @@ def num_tokens_from_string(string: str, encoding_name: str) -> int:
 
 def truncate_text(text, max_tokens):
     nltk.download('punkt')
+    nltk.download('punkt_tab')
     tokens = word_tokenize(text)
     trimmed_text = ' '.join(tokens[:max_tokens])
     return trimmed_text
@@ -280,7 +278,7 @@ def customer_support(request):
         ]
         sent_time = datetime.now(tz=timezone.utc)
         chat_model = init_chat_model(llm_provider)
-        answer = chat_model(messages).content
+        answer = chat_model.invoke(messages).content
         received_time = datetime.now(tz=timezone.utc)
         log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id, 'customer support')
     context = {
@@ -540,7 +538,7 @@ def financial_analysis(request):
                     ]
                     sent_time = datetime.now(tz=timezone.utc)
                     chat_model = init_chat_model(llm_provider)
-                    answer = chat_model(messages).content
+                    answer = chat_model.invoke(messages).content
                     received_time = datetime.now(tz=timezone.utc)
                     log_llm_interaction(augmented_prompt, answer, sent_time, received_time, 'original', 'azure', model_id,
                                         'product offer')
@@ -655,7 +653,7 @@ def search(request):
                 ]
                 sent_time = datetime.now(tz=timezone.utc)
                 chat_model = init_chat_model(llm_provider)
-                answer = chat_model(messages).content
+                answer = chat_model.invoke(messages).content
                 received_time = datetime.now(tz=timezone.utc)
                 log_llm_interaction(augmented_prompt, prompt_construct, sent_time, received_time, 'original', llm_provider, model_id,
                                     'transaction advice')
