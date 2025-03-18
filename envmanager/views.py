@@ -34,6 +34,13 @@ llm_provider = getattr(settings, 'LLM_PROVIDER', None)
 llm_temperature = 0
 
 
+def get_es_client():
+    """Initialize and return an Elasticsearch client."""
+    return Elasticsearch(
+        cloud_id=elastic_cloud_id,
+        http_auth=(elastic_user, elastic_password)
+    )
+
 def init_chat_model(provider):
     if provider == 'azure':
         chat_model = AzureChatOpenAI(
@@ -57,10 +64,8 @@ def init_chat_model(provider):
 
 # Create your views here.
 def manager(request):
-    es = Elasticsearch(
-        cloud_id=elastic_cloud_id,
-        http_auth=(elastic_user, elastic_password)
-    )
+    es = get_es_client()
+
     index_exists = False
     product_index_exists = False
     llm_index_exists = False
@@ -242,10 +247,8 @@ def banking_products(request, action=None, banking_product_id=None):
 def cluster(request):
     print(f"elastic cloud id: {elastic_cloud_id}")
 
-    es = Elasticsearch(
-        cloud_id=elastic_cloud_id,
-        http_auth=(elastic_user, elastic_password)
-    )
+    es = get_es_client()
+
     context = {
         'es': es.info,
         'ping': es.ping
@@ -295,9 +298,8 @@ def process_data_action(request):
 
 
 def clear_data(request):
-    es = Elasticsearch(
-        cloud_id=elastic_cloud_id,
-        http_auth=(elastic_user, elastic_password))
+    es = get_es_client()
+
     query = {
         "match_all": {}
     }
@@ -382,6 +384,7 @@ def knowledge_base(request):
         kb_index_mapping = read_json_file(f'files/knowledge_base_mapping.json')
         kb_index_settings = read_json_file(f'files/knowledge_base_settings.json')
         # destroy any existing assets
+        es = get_es_client()
         index_exists = es.indices.exists(index=processed_kb_index)
         if index_exists:
             print("delete index")
@@ -432,9 +435,7 @@ def knowledge_base(request):
 
 
 def index_setup(request):
-    es = Elasticsearch(
-        cloud_id=elastic_cloud_id,
-        http_auth=(elastic_user, elastic_password))
+    es = get_es_client()
     if request.method == 'POST':
         transaction_index_mapping = read_json_file(f'files/transaction_index_mapping.json')
         transaction_index_settings = read_json_file(f'files/transaction_index_settings.json')
