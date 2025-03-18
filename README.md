@@ -99,6 +99,11 @@ pip install -r requirements.txt
 Create a fresh .env file, and use the contents of env.example as a template. You will need all of these values in order for the
 application to work. Adjust all the variables to your setup.
 
+Source the file in your terminal before starting the following commands.
+```bash
+source .env
+```
+
 IMPORTANT: Generate a DJANGO_SECRET_KEY and put it to the .env file as well:
 ```bash
 python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
