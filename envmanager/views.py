@@ -5,7 +5,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from onlinebanking.models import BankAccount, BankAccountType, AccountTransactionType, AccountTransaction, Customer, \
     CustomerAddress, Retailer, DemoScenarios, BankingProducts
 from django.core.management import call_command
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, ConnectionError, AuthenticationException, exceptions
+from elasticsearch.exceptions import ApiError
 from elasticsearch.helpers import scan
 import subprocess
 from config import settings
@@ -35,11 +36,29 @@ llm_temperature = 0
 
 
 def get_es_client():
-    """Initialize and return an Elasticsearch client."""
-    return Elasticsearch(
-        cloud_id=elastic_cloud_id,
-        http_auth=(elastic_user, elastic_password)
-    )
+    try:
+        client = Elasticsearch(
+            cloud_id=elastic_cloud_id,
+            http_auth=(elastic_user, elastic_password)
+        )
+        
+        # Check if the client is connected
+        if client.ping():
+            print("Successfully connected to Elasticsearch.")
+        else:
+            print("Warning: Elasticsearch client is initialized but not responding.")
+        
+        return client
+    
+    except AuthenticationException:
+        print("Error: Authentication failed. Please check your credentials.")
+        return None
+    except ConnectionError:
+        print("Error: Unable to connect to Elasticsearch. Check network settings.")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
 
 def init_chat_model(provider):
     if provider == 'azure':
@@ -60,7 +79,7 @@ def init_chat_model(provider):
             streaming=True,
             model_kwargs={"temperature": llm_temperature})
     return chat_model
-
+    
 
 # Create your views here.
 def manager(request):
