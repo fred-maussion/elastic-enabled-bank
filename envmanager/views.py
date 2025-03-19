@@ -80,7 +80,6 @@ def init_chat_model(provider):
             model_kwargs={"temperature": llm_temperature})
     return chat_model
     
-
 # Create your views here.
 def manager(request):
     es = get_es_client()
@@ -452,6 +451,47 @@ def knowledge_base(request):
     }
     return render(request, 'envmanager/knowledge_base.html', context)
 
+def eland_action(request):
+    """Handle form submission to deploy the Hugging Face model using Eland's CLI script."""
+    if request.method == "POST" and request.POST.get("command_name") == "eland_execute":
+        es = get_es_client()
+        model_id = "nlptown/bert-base-multilingual-uncased-sentiment"
+        es_model_id = model_id.replace("/", "__")  # Convert model ID for Elasticsearch compatibility
+
+        try:
+            # Fetch existing models
+            existing_models = es.ml.get_trained_models()
+            model_names = [model["model_id"] for model in existing_models.get("trained_model_configs", [])]
+            if es_model_id in model_names:
+                print("Model is already deployed. Skipping import.")
+                deployment_status = f"Model {model_id} is already deployed in Elasticsearch."
+            else:
+                print("Model not found. Proceeding with import...")
+                command = [
+                    "eland_import_hub_model",
+                    "--cloud-id", elastic_cloud_id,
+                    "-u", elastic_user,
+                    "-p", elastic_password,
+                    "--hub-model-id", model_id,
+                    "--task-type", "text_classification",
+                    "--es-model-id", es_model_id,
+                    "--start"
+                ]
+                print(f"Executing command: {' '.join(command)}")  # Debugging
+
+                result = subprocess.run(
+                    command, capture_output=True, text=True, check=True, stdin=subprocess.DEVNULL
+                )
+                print("Model import completed.")
+                deployment_status = f"Model imported successfully! Output:\n{result.stdout}"
+        except subprocess.CalledProcessError as e:
+            print(f"Model import failed: {e.stderr}")
+            deployment_status = f"Model import failed! Error:\n{e.stderr}"
+        except Exception as e:
+            print(f"Error checking model status: {e}")
+            deployment_status = f"Error checking model status: {str(e)}"
+
+        return render(request, "envmanager/knowledge_base.html", {"message": deployment_status})
 
 def index_setup(request):
     es = get_es_client()
