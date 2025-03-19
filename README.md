@@ -19,16 +19,14 @@ Your cluster will need:
 - 2GB RAM search node
 - an Integration node if you want to instrument the application later
 
-Once you have a cluster configured, you must enable the '.elser_model_2_linux-x86_64' trained model in your cluster. If you choose another model you must consider
-the implications of updating the query code as the format of the semantic search is done using text expansion.
+Once you have a cluster configured, you can deploy '.elser_model_2_linux-x86_64' trained model in your cluster directly from the interface. If you choose another model you must consider the implications of updating the query code as the format of the semantic search is done using text expansion.
 
-In order for sentiment analysis to work on the LLM logging capability, you will need a sentiment model. I used 'nlptown__bert-base-multilingual-uncased-sentiment'
-as this provides a score based on stars (5 being the most positive and 1 being the least) and also gives a confidence prediction out of 1.
+In order for sentiment analysis to work on the LLM logging capability, you will need a sentiment model. You can use the interface to deploy 'nlptown__bert-base-multilingual-uncased-sentiment' as this provides a score based on stars (5 being the most positive and 1 being the least) and also gives a confidence prediction out of 1.
 
-You will need to upload this into your cluster following the ELAND library steps available here:
+You will need to to install eland[pytorch] using pip:
 
 ````
-https://eland.readthedocs.io/en/latest/
+python -m pip install 'eland[pytorch]'
 ````
 
 ## Run as-is using Docker:
