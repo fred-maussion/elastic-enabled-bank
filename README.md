@@ -13,6 +13,7 @@ Irrespective of how you deploy the python app, you will need an Elasticsearch cl
 ### Elasticsearch config:
 
 Your cluster will need:
+
 - 8GB RAM hot nodes
 - 4GB RAM ml nodes
 - 1GB RAM kibana node
@@ -25,26 +26,51 @@ In order for sentiment analysis to work on the LLM logging capability, you will 
 
 You will need to to install eland[pytorch] using pip:
 
-````
+````bash
 python -m pip install 'eland[pytorch]'
 ````
 
 ## Run as-is using Docker:
+
 - Navigate to the root folder of the downloaded repo.
 - using the file env.example as a template, construct your .env file with all of the necessary credentials required to run the demo.
 - Option 1 : Use the prebuild docker container:
+
+Docker version will come in two flavors :
+
+- elasticbank: version that will cover most of the elasticbank demo aside the sentiment analysis
+- elasticbank-complete: heavier version that contains all the _elastic-enabled-bank_ docker features with eland for sentiment analysis NLP model import
+
+_elasticbank_
+
+````bash
+sudo docker run --env-file .env -d --rm --name elastic-bank -p 8000:8000 ghcr.io/TimBrophy/elasticbank
 ````
-sudo docker run --env-file .env -d --name elastic-bank -p 8000:8000 ghcr.io/TimBrophy/elastic-enabled-bank
+
+_elasticbank-complete_
+
+````bash
+sudo docker run --env-file .env -d --rm --name elastic-bank-complete -p 8000:8000 ghcr.io/TimBrophy/elasticbank-complete
 ````
 
 - Option 2 : Build the container image:
-````
+
+````bash
 sudo docker build -t <your_chosen_image_name> .
 ````
 
 Next, run the container to bind on port 8000:
+
+_elasticbank_
+
+````bash
+sudo docker run --env-file .env -d --rm --name elasticbank -p 8000:8000 <your_chosen_image_name>
 ````
-sudo docker run --env-file .env -d --name elastic-bank -p 8000:8000 <your_chosen_image_name>
+
+_elasticbank-complete_
+
+````bash
+sudo docker run --env-file .env -d --rm --name elasticbank -p 8000:8000 <your_chosen_image_name>
 ````
 
 Your host should now serve the demo on port 8000.
@@ -98,24 +124,29 @@ Create a fresh .env file, and use the contents of env.example as a template. You
 application to work. Adjust all the variables to your setup.
 
 Source the file in your terminal before starting the following commands.
+
 ```bash
 source .env
 ```
 
 IMPORTANT: Generate a DJANGO_SECRET_KEY and put it to the .env file as well:
+
 ```bash
 python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 ```
 
 Make sure all migrations are applied
+
 ````bash
 python manage.py migrate
 ````
 
 In your terminal, enter the following command to start the webserver:
+
 ````bash
 python manage.py runserver
 ````
+
 Access the front-end of the online banking app by entering "127.0.0.1:8000" in your browser.
 
 And hey, look at that, we're running an ***Elastic-enabled bank!***
