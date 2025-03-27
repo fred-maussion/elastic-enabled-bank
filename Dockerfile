@@ -1,25 +1,27 @@
 # Builder stage
-FROM python:3.11 AS builder
+FROM python:3.11-slim AS builder
 
 # Set environment variables
-ENV LANG=C.UTF-8
-ENV PYTHONUNBUFFERED=1
+ENV LANG=C.UTF-8 \
+    PYTHONUNBUFFERED=1
 
 # Set up the working directory
 WORKDIR /eeb
 
-# Create and activate a virtual environment
-RUN python -m venv /eeb/venv
-
-# Upgrade pip to the latest version compatible with Python 3.10
-RUN /eeb/venv/bin/pip install --upgrade pip
-
 # Install dependencies (only requirements.txt)
 COPY requirements.txt .
-RUN /eeb/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# Create and activate a virtual environment
+RUN python -m venv /eeb/venv && \
+    /eeb/venv/bin/pip install --upgrade pip && \
+    /eeb/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# Remove unnecessary files to reduce size
+RUN find /eeb/venv -type f -name '*.py[co]' -delete && \
+    find /eeb/venv -type d -name '__pycache__' -exec rm -rf {} +
 
 # Production image
-FROM python:3.11
+FROM python:3.11-slim-bullseye
 
 # Set up the working directory
 WORKDIR /app
@@ -31,8 +33,8 @@ COPY . ./
 COPY --from=builder /eeb/venv /venv
 
 # Set environment variables for the final stage
-ENV PYTHONUNBUFFERED=1
-ENV PATH="/venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1 \
+    PATH="/venv/bin:$PATH"
 
 # Expose port 8000 to the outside world
 EXPOSE 8000

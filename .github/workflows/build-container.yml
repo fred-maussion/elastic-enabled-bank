@@ -32,7 +32,7 @@ jobs:
       - name: Build and Tag Docker Image
         run: |
           IMAGE_PATH=ghcr.io/${OWNER_LC}/elastic-enabled-bank
-          docker build -t $IMAGE_PATH:latest .
+          docker build -t $IMAGE_PATH:latest -f Dockerfile .
           echo "Built image: $IMAGE_PATH:latest"
 
       - name: Push Docker Image
