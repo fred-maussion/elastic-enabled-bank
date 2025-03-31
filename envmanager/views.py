@@ -454,6 +454,7 @@ def deploy_elser(model_id, request):
                     model_id=model_id,
                     number_of_allocations=1,
                     threads_per_allocation=1,
+                    priority="low",
                     wait_for="started"
                 )
 
