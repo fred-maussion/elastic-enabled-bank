@@ -11,14 +11,14 @@ WORKDIR /eeb
 # Install dependencies (only requirements.txt)
 COPY requirements.txt .
 
-# Create and activate a virtual environment
-RUN python -m venv /eeb/venv && \
-    /eeb/venv/bin/pip install --upgrade pip && \
-    /eeb/venv/bin/pip install --no-cache-dir -r requirements.txt
+# Create and activate a virtual environment directly in /venv/
+RUN python -m venv /venv && \
+    /venv/bin/pip install --upgrade pip && \
+    /venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # Remove unnecessary files to reduce size
-RUN find /eeb/venv -type f -name '*.py[co]' -delete && \
-    find /eeb/venv -type d -name '__pycache__' -exec rm -rf {} +
+RUN find /venv -type f -name '*.py[co]' -delete && \
+    find /venv -type d -name '__pycache__' -exec rm -rf {} +
 
 # Production image
 FROM python:3.11-slim-bullseye
@@ -30,7 +30,7 @@ WORKDIR /app
 COPY . ./
 
 # Copy the virtual environment from the builder stage
-COPY --from=builder /eeb/venv /venv
+COPY --from=builder /venv /venv
 
 # Set environment variables for the final stage
 ENV PYTHONUNBUFFERED=1 \
