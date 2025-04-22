@@ -161,24 +161,41 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
 LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+    },
     'handlers': {
         'elasticapm': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'elasticapm.contrib.django.handlers.LoggingHandler',
         },
         'console': {
-            'level': 'WARNING',
-            'class': 'logging.StreamHandler'
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
-        'elasticapm': {
-            'level': 'WARNING',
-            'handlers': ['console']
+        'django.db.backends': {
+            'level': 'INFO',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'elastic-bank': {
+            'level': 'DEBUG',
+            'handlers': ['elasticapm', 'console'],
+            'propagate': False,
+        },
+        # Log errors from the Elastic APM module to the console (recommended)
+        'elasticapm.errors': {
+            'level': 'INFO',
+            'handlers': ['console'],
+            'propagate': False,
         },
     },
 }
