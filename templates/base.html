@@ -118,6 +118,7 @@
         serviceVersion: "{{ ELASTIC_APM_SERVICE_VERSION }}",
         environment: "{{ ELASTIC_APM_ENVIRONMENT }}",
         breakdownMetrics: true,
+        log_ecs_reformatting: "override",
         pageLoadTraceId: "{{ apm.trace_id }}",
         pageLoadSpanId: "{{ apm.span_id }}",
       })

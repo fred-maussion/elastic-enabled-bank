@@ -29,7 +29,6 @@ import logging
 
 load_dotenv()
 
-
 from langchain.schema import (
     SystemMessage,
     HumanMessage)
@@ -104,6 +103,7 @@ def log_llm_interaction(prompt, response, sent_time, received_time, answer_type,
 
 
 def init_chat_model(provider):
+    logger.info(f"Initializing chat model for provider: {provider}")
     if provider == 'azure':
         chat_model = AzureChatOpenAI(
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
@@ -112,6 +112,7 @@ def init_chat_model(provider):
             openai_api_key=os.environ["AZURE_OPENAI_KEY"],
             temperature=llm_temperature
         )
+        logger.info("Azure chat model initialized successfully.")
     elif provider == 'aws':
         bedrock_client = boto3.client(service_name="bedrock-runtime", region_name=os.environ['aws_region'],
                                       aws_access_key_id=os.environ['aws_access_key'],
@@ -121,6 +122,11 @@ def init_chat_model(provider):
             model_id=os.environ['aws_model_id'],
             streaming=True,
             model_kwargs={"temperature": 0})
+        logger.info("AWS chat model initialized successfully.")
+    else:
+        logger.error(f"Unsupported provider: {provider}")
+        raise ValueError(f"Unsupported provider: {provider}")
+
     return chat_model
 
 
@@ -146,10 +152,20 @@ def num_tokens_from_string(string: str, encoding_name: str) -> int:
 
 
 def truncate_text(text, max_tokens):
-    nltk.download('punkt')
-    nltk.download('punkt_tab')
+    logger.debug("Starting text truncation.")
+    # Check if NLTK data files are already downloaded
+    try:
+        nltk.data.find('tokenizers/punkt')
+        logger.debug("NLTK 'punkt' tokenizer found.")
+    except LookupError:
+        logger.info("NLTK 'punkt' tokenizer not found. Downloading...")
+        nltk.download('punkt')
+        nltk.download('punkt_tab')
+        logger.info("NLTK 'punkt' tokenizer downloaded successfully.")
     tokens = word_tokenize(text)
+    logger.debug(f"Tokenized text into {len(tokens)} tokens.")
     trimmed_text = ' '.join(tokens[:max_tokens])
+    logger.debug(f"Trimmed text to {max_tokens} tokens.")
     return trimmed_text
 
 
@@ -562,13 +578,16 @@ def search(request):
     prompt_construct = ""
     question = ""
     if request.method == 'POST':
+        logger.info("Received POST request for search.")
         search_term = request.POST.get('search_term')
         if search_term is None:
             search_term = request.POST.get('question')
-        logger.info(f"Record search term: {search_term}")
+        logger.info(f"Search term extracted: {search_term}")
         demo_user = Customer.objects.filter(id=customer_id).first()
+        logger.debug(f"Demo user retrieved: {demo_user}")
         # handle the es connection for the map and conversational search components
         es = get_es_client()
+        logger.info("Elasticsearch client initialized.")
         query = {
             "bool": {
                 "should": [
@@ -594,65 +613,56 @@ def search(request):
                 }
             }
         }
+        logger.debug(f"Constructed Elasticsearch query: {query}")
 
         field_list = ["transaction_date", "description", "transaction_value",
                       "transaction_category", "bank_account_number", "opening_balance", "closing_balance", "_score"]
         results = es.search(index=index_name, query=query, size=20, min_score=1)
-        logger.info(f"Record search results: {results}")
+        logger.info(f"Elasticsearch query executed. Results: {results}")
         response_data = [{"_score": hit["_score"], **hit["_source"]} for hit in results["hits"]["hits"]]
         transaction_results = []
         # Check if there are hits
         if "hits" in results and "total" in results["hits"]:
             total_hits = results["hits"]["total"]
+            logger.info(f"Total hits found: {total_hits}")
             # Check if there are any hits with a value greater than 0
             if isinstance(total_hits, dict) and "value" in total_hits and total_hits["value"] > 0:
                 for hit in response_data:
                     doc_data = {field: hit[field] for field in field_list if field in hit}
                     transaction_results.append(doc_data)
+                logger.debug(f"Transaction results processed: {transaction_results}")
             question = request.POST.get('question')
             if question:
+                logger.info(f"Question provided: {question}")
                 context_documents = str(transaction_results[:20])
                 context_documents = truncate_text(context_documents, 10000)
+                logger.debug(f"Context documents truncated: {context_documents}")
 
-                # Phase 1
-                # prompt_file = 'files/auto_generate_prompt.txt'
-                # with open(prompt_file, "r") as file:
-                #     prompt_contents_template = file.read()
-                #     prompt = prompt_contents_template.format(question=question, context_documents=context_documents, original_search=search_term)
-                #     augmented_prompt = prompt
-                # messages = [
-                #     SystemMessage(
-                #         content="You are a helpful prompt engineer."),
-                #     HumanMessage(content=augmented_prompt)
-                # ]
-                # sent_time = datetime.now(tz=timezone.utc)
-                # chat_model = init_chat_model(llm_provider)
-                # prompt_construct = chat_model(messages).content
-                # received_time = datetime.now(tz=timezone.utc)
-                # log_llm_interaction(augmented_prompt, prompt_construct, sent_time, received_time, 'original', llm_provider, model_id,
-                #                     'transaction advice')
-
-                # Phase 2
                 prompt_file = 'files/transaction_search_prompt.txt'
                 with open(prompt_file, "r") as file:
                     prompt_contents_template = file.read()
                     prompt = prompt_contents_template.format(question=question, context_documents=context_documents, original_search=search_term)
                     augmented_prompt = prompt
+                logger.debug(f"Augmented prompt constructed: {augmented_prompt}")
                 messages = [
                     SystemMessage(
                         content="You are a helpful prompt engineer."),
                     HumanMessage(content=augmented_prompt)
                 ]
                 sent_time = datetime.now(tz=timezone.utc)
+                logger.info("Initializing chat model interaction.")
                 chat_model = init_chat_model(llm_provider)
                 answer = chat_model.invoke(messages).content
                 received_time = datetime.now(tz=timezone.utc)
+                logger.info("Chat model interaction completed.")
                 log_llm_interaction(augmented_prompt, prompt_construct, sent_time, received_time, 'original', llm_provider, model_id,
                                     'transaction advice')
     else:
+        logger.info("Received GET request for search.")
         answer = []
         transaction_results = []
 
+    logger.debug(f"Final context for rendering: search_term={search_term}, results={transaction_results}, answer={answer}, question={question}")
     context = {
         'search_term': search_term,
         'results': transaction_results,

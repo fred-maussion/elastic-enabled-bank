@@ -39,8 +39,6 @@ llm_provider = getattr(settings, 'LLM_PROVIDER', None)
 llm_temperature = 0
 logger = logging.getLogger('elastic-bank')
 
-
-
 def get_es_client():
     try:
         client = Elasticsearch(

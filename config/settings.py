@@ -14,6 +14,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 import environ
 from django.core.management.utils import get_random_secret_key
+import ecs_logging
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -123,7 +124,9 @@ DATABASES = {
 ELASTIC_APM = {
     'SERVICE_NAME': 'elastic-enabled-bank',
     'DJANGO_TRANSACTION_NAME_FROM_ROUTE': True,
+    'LOG_ECS_REFORMATTING': "override",
     'DEBUG': True,
+    'LOG_LEVEL': 'debug'
 }
 
 # Password validation
@@ -174,36 +177,45 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
     'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        'ecs': {
+            '()': ecs_logging.StdlibFormatter,
         },
     },
     'handlers': {
         'elasticapm': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'class': 'elasticapm.contrib.django.handlers.LoggingHandler',
         },
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose'
+            'formatter': 'ecs'
         }
     },
     'loggers': {
-        'django.db.backends': {
-            'level': 'INFO',
+        'django': {
             'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console', 'elasticapm'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'ERROR',
             'propagate': False,
         },
         'elastic-bank': {
-            'level': 'DEBUG',
             'handlers': ['elasticapm', 'console'],
+            'level': 'INFO',
             'propagate': False,
         },
-        # Log errors from the Elastic APM module to the console (recommended)
         'elasticapm.errors': {
-            'level': 'INFO',
             'handlers': ['console'],
+            'level': 'ERROR',
             'propagate': False,
         },
     },
